@@ -13,6 +13,7 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.Window;
@@ -21,6 +22,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ycxy.ymh.adapter.AudioAdapter;
 import com.ycxy.ymh.bean.Audio;
 
 import java.util.ArrayList;
@@ -41,6 +43,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
+            switch (msg.what){
+                case SUCCESSQUERY:
+                    AudioAdapter adapter = new AudioAdapter(MainActivity.this,audioArrayList);
+                    recyclerView.setAdapter(adapter);
+                    break;
+            }
         }
     };
 
@@ -70,6 +78,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_audio_play = findViewById(R.id.btn_audio_play);
         btn_audio_next = findViewById(R.id.btn_audio_next);
         tv_audio_msg = findViewById(R.id.tv_audio_msg);
+
+        LinearLayoutManager manager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(manager);
 
         ll_audio_msg.setOnClickListener(this);
         btn_audio_play.setOnClickListener(this);
