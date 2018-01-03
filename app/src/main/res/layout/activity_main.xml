@@ -7,13 +7,38 @@
     android:orientation="vertical"
     tools:context="com.ycxy.ymh.learnenglish.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+<android.support.v7.widget.RecyclerView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_weight="1">
 
+</android.support.v7.widget.RecyclerView>
+
+    <LinearLayout
+        android:background="#11000000"
+        android:id="@+id/ll_botton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp">
+        <ImageView
+            android:layout_marginLeft="10dp"
+            android:id="@+id/iv_play"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/play"
+            />
+        <ImageView
+            android:layout_marginLeft="10dp"
+            android:id="@+id/iv_next"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:src="@drawable/btn_audio_next_selector"/>
+        <TextView
+
+            android:layout_weight="1"
+            android:gravity="center"
+            android:id="@+id/iv_show_state"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="没有音乐在播放"/>
+    </LinearLayout>
 </LinearLayout>
