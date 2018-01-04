@@ -1,5 +1,7 @@
 package com.ycxy.ymh.activity;
 
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -9,18 +11,37 @@ import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.ycxy.ymh.learnenglish.R;
 
 public class AudioActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private static final int SHOWAUDIONAME = 0;
     private ImageView iv_cd;
     private ImageView iv_handler;
     private Button btn_play;
+    private Button btn_next;
+    private Button btn_pre;
+    private Button btn_mode;
+    private Button btn_menu;
+    private Button seekbar;
+    private TextView tv_show_Time;
+
     private boolean isPlaying = true;
     private Animation operatingAnim;
     private RotateAnimation rotate;
 
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case SHOWAUDIONAME:
+                    break;
+            }
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,8 +65,8 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         rotate.setFillAfter(true);
 
         btn_play.setOnClickListener(this);
-
-
+        
+        handler.sendEmptyMessageDelayed(SHOWAUDIONAME,100);
     }
 
     private void clsTilte() {

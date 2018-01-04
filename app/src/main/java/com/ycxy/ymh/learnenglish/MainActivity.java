@@ -3,20 +3,27 @@ package com.ycxy.ymh.learnenglish;
 import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+import android.os.RemoteException;
 import android.provider.MediaStore;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -27,6 +34,7 @@ import android.widget.Toast;
 import com.ycxy.ymh.activity.AudioActivity;
 import com.ycxy.ymh.adapter.AudioAdapter;
 import com.ycxy.ymh.bean.Audio;
+import com.ycxy.ymh.service.AudioPlayService;
 import com.ycxy.ymh.view.MyDecoration;
 
 import java.util.ArrayList;
@@ -34,6 +42,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int SUCCESSQUERY = 0;
+    private static final int SHOWAUDIONAME = 1;
     private ArrayList<Audio> audioArrayList;
     private LinearLayout ll_audio_msg;
     private RecyclerView recyclerView;
@@ -47,14 +56,62 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            switch (msg.what){
+            switch (msg.what) {
                 case SUCCESSQUERY:
-                    AudioAdapter adapter = new AudioAdapter(MainActivity.this,audioArrayList);
+                    AudioAdapter adapter = new AudioAdapter(MainActivity.this, audioArrayList);
                     recyclerView.setAdapter(adapter);
+                    break;
+                case SHOWAUDIONAME:
+                    if (service != null) {
+                        try {
+                            // 记住切割名字
+                            if (service.getName().equals("")) {
+                                tv_audio_msg.setText("当前没有音乐在播放");
+                            } else {
+                                tv_audio_msg.setText("正在播放 " + service.getName().split("\\.")[0]);
+                            }
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        tv_audio_msg.setText("当前没有音乐在播放");
+                    }
+                    handler.sendEmptyMessageDelayed(SHOWAUDIONAME, 100);
                     break;
             }
         }
     };
+
+    private IAudioPlayService service;
+    private int position = 0;
+    private ServiceConnection conn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            service = IAudioPlayService.Stub.asInterface(iBinder);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            try {
+                if (service != null) {
+                    service.stop();
+                    service = null;
+                }
+            } catch (Exception e) {
+
+            }
+        }
+    };
+
+    private void openAudio() {
+        if (service != null) {
+            try {
+                service.openAudio(position);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +131,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initData() {
         getDataFromLocal();
+        startService();
+        handler.sendEmptyMessageDelayed(SHOWAUDIONAME, 100);
+    }
+
+    private void startService() {
+        Intent intent = new Intent(this, AudioPlayService.class);
+        startService(intent);
+        bindService(intent, conn, BIND_AUTO_CREATE);
     }
 
     private void initView() {
@@ -85,7 +150,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         LinearLayoutManager manager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(manager);
-        recyclerView.addItemDecoration(new MyDecoration(this,LinearLayoutManager.HORIZONTAL));
+        recyclerView.addItemDecoration(new MyDecoration(this, LinearLayoutManager.HORIZONTAL));
+        recyclerView.addOnItemTouchListener(new MyOnItemTouchListener(recyclerView) {
+
+            @Override
+            public void onItemClick(RecyclerView.ViewHolder vh) {
+                // 开始播放音乐
+                position = vh.getAdapterPosition();
+                openAudio();
+            }
+        });
 
         ll_audio_msg.setOnClickListener(this);
         btn_audio_play.setOnClickListener(this);
@@ -181,17 +255,107 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent);
                 break;
             case R.id.btn_audio_play:
-                if (isPlaying) {
-                    btn_audio_play.setBackgroundResource(R.mipmap.pause);
-                } else {
-                    btn_audio_play.setBackgroundResource(R.mipmap.play);
+                try {
+
+                    if (service.isNull()) {
+                        openAudio();
+                    }
+
+                    if (service.isPlaying()) {
+                        btn_audio_play.setBackgroundResource(R.mipmap.pause);
+                        service.pause();
+                    } else {
+                        btn_audio_play.setBackgroundResource(R.mipmap.play);
+                        service.start();
+                    }
+                    isPlaying = !isPlaying;
+                } catch (RemoteException e) {
+                    e.printStackTrace();
                 }
-                isPlaying = !isPlaying;
+
                 break;
             case R.id.btn_audio_next:
                 Toast.makeText(this, "下一曲", Toast.LENGTH_SHORT).show();
                 break;
 
+        }
+    }
+
+    /**
+     * 实现触摸点击Item的监听
+     */
+    private abstract class MyOnItemTouchListener implements RecyclerView.OnItemTouchListener {
+
+        private GestureDetectorCompat mGestureDetectorCompat;
+        private RecyclerView mRecyclerView;
+
+        public MyOnItemTouchListener(RecyclerView recyclerView) {
+            this.mRecyclerView = recyclerView;
+            mGestureDetectorCompat = new GestureDetectorCompat(mRecyclerView.getContext()
+                    , new MyGestureListener());
+        }
+
+        @Override
+        public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+            mGestureDetectorCompat.onTouchEvent(e);
+            return false;
+        }
+
+        @Override
+        public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+            mGestureDetectorCompat.onTouchEvent(e);
+        }
+
+        @Override
+        public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
+        }
+
+        public abstract void onItemClick(RecyclerView.ViewHolder vh);
+
+        /**
+         * 根据手势
+         */
+        private class MyGestureListener implements GestureDetector.OnGestureListener {
+
+            @Override
+            public boolean onDown(MotionEvent motionEvent) {
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent motionEvent) {
+
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                View childe = mRecyclerView.findChildViewUnder(e.getX(), e.getY());
+                if (childe != null) {
+                    RecyclerView.ViewHolder VH = mRecyclerView.getChildViewHolder(childe);
+                    onItemClick(VH);
+                }
+                return true;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                View childe = mRecyclerView.findChildViewUnder(e.getX(), e.getY());
+                if (childe != null) {
+                    RecyclerView.ViewHolder VH = mRecyclerView.getChildViewHolder(childe);
+                    onItemClick(VH);
+                }
+            }
+
+            @Override
+            public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+                return false;
+            }
         }
     }
 }

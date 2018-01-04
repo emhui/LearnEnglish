@@ -7,41 +7,47 @@
     android:orientation="vertical"
     tools:context="com.ycxy.ymh.learnenglish.MainActivity">
 
-<android.support.v7.widget.RecyclerView
-    android:id="@+id/recyclerView"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_weight="1">
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
 
-</android.support.v7.widget.RecyclerView>
+    </android.support.v7.widget.RecyclerView>
 
     <LinearLayout
-        android:clickable="true"
-        android:background="@drawable/touch_foot_bg"
         android:id="@+id/ll_audio_msg"
         android:layout_width="match_parent"
-        android:layout_height="60dp">
+        android:layout_height="60dp"
+        android:background="@drawable/touch_foot_bg"
+        android:clickable="true">
+
         <Button
-            android:layout_marginLeft="10dp"
             android:id="@+id/btn_audio_play"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:background="@mipmap/play"
-            />
-        <Button
             android:layout_marginLeft="10dp"
+            android:background="@mipmap/play" />
+
+        <Button
             android:id="@+id/btn_audio_next"
             android:layout_width="40dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
             android:layout_height="match_parent"
-            android:background="@drawable/btn_audio_next_selector"/>
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/btn_audio_next_selector" />
+
         <TextView
-            android:layout_weight="1"
-            android:gravity="center"
             android:id="@+id/tv_audio_msg"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:text="没有音乐在播放"/>
+            android:layout_weight="1"
+            android:ellipsize="marquee"
+            android:focusable="true"
+            android:gravity="center"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:scrollbars="horizontal"
+            android:singleLine="true" />
     </LinearLayout>
 </LinearLayout>

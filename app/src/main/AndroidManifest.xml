@@ -18,7 +18,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.ycxy.ymh.activity.AudioActivity"></activity>
+        <activity android:name="com.ycxy.ymh.activity.AudioActivity" />
+
+        <service
+            android:name="com.ycxy.ymh.service.AudioPlayService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>
