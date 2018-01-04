@@ -16,7 +16,8 @@
 </android.support.v7.widget.RecyclerView>
 
     <LinearLayout
-        android:background="#ffffff"
+        android:clickable="true"
+        android:background="@drawable/touch_foot_bg"
         android:id="@+id/ll_audio_msg"
         android:layout_width="match_parent"
         android:layout_height="60dp">

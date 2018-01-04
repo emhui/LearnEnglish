@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -23,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ycxy.ymh.activity.AudioActivity;
 import com.ycxy.ymh.adapter.AudioAdapter;
 import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.view.MyDecoration;
@@ -175,6 +177,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (view.getId()) {
             case R.id.ll_audio_msg:
                 Toast.makeText(this, "跳转", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(MainActivity.this, AudioActivity.class);
+                startActivity(intent);
                 break;
             case R.id.btn_audio_play:
                 if (isPlaying) {
