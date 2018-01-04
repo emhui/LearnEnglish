@@ -3,4 +3,8 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="line_grey">#11000000</color>
+    <color name="white">#ffffff</color>
+    <color name="netese_music_white">#f3f4f6</color>
+    <color name="netese_music_divider">#e7e8ea</color>
 </resources>

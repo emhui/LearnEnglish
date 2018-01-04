@@ -48,7 +48,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder>{
         Audio audio = audioArrayList.get(position);
 
         String name = audio.getName();
-        name = name.split("\\.")[0];
+        name = name.split("\\.")[0]; // 音频文件后缀去除 e: a.mp3 = a;
         holder.tv_audio_name.setText(name);
         holder.tv_audio_artist.setText(audio.getArtist());
     }
