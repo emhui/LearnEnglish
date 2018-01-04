@@ -14,14 +14,16 @@ import android.provider.MediaStore;
 import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.learnenglish.IAudioPlayService;
 import com.ycxy.ymh.learnenglish.MainActivity;
+import com.ycxy.ymh.learnenglish.R;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class AudioPlayService extends Service {
 
     private ArrayList<Audio> audioArrayList;
-    private int postition;
+    private int position = 0;
     /**
      * 播放音乐
      */
@@ -33,7 +35,7 @@ public class AudioPlayService extends Service {
     /**
      * 顺序播放
      */
-    public static final int REPEAT_NORMAL = 1;
+    public static final int REPEAT_ALL = 1;
     /**
      * 单曲循环
      */
@@ -41,12 +43,12 @@ public class AudioPlayService extends Service {
     /**
      * 全部循环
      */
-    public static final int REPEAT_ALL = 3;
+    public static final int REPEAT_RANDOM = 3;
 
     /**
      * 播放模式
      */
-    private int playmode = REPEAT_NORMAL;
+    private int playmode = REPEAT_ALL;
 
     @Override
     public void onCreate() {
@@ -144,6 +146,11 @@ public class AudioPlayService extends Service {
         public boolean isNull() throws RemoteException {
             return service.isNull();
         }
+
+        @Override
+        public void seekTo(int mesc) throws RemoteException {
+            service.seekTo(mesc);
+        }
     };
 
     /**
@@ -152,7 +159,7 @@ public class AudioPlayService extends Service {
      * @param position
      */
     public void openAudio(int position) {
-        this.postition = position;
+        this.position = position;
         if (audioArrayList != null && audioArrayList.size() > 0) {
 
             audio = audioArrayList.get(position);
@@ -170,15 +177,13 @@ public class AudioPlayService extends Service {
                 mediaPlayer.setDataSource(audio.getData());
                 mediaPlayer.prepareAsync();
 
-
-/*                if(playmode==MusicPlayerService.REPEAT_SINGLE){
+                if(playmode==AudioPlayService.REPEAT_SINGLE){
                     //单曲循环播放-不会触发播放完成的回调
                     mediaPlayer.setLooping(true);
                 }else{
                     //不循环播放
                     mediaPlayer.setLooping(false);
-                }*/
-
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -211,9 +216,6 @@ public class AudioPlayService extends Service {
 
         @Override
         public void onPrepared(MediaPlayer mp) {
-            //通知Activity来获取信息--广播
-//            notifyChange(OPENAUDIO);
-/*            EventBus.getDefault().post(mediaItem);*/
             start();
         }
     }
@@ -286,12 +288,48 @@ public class AudioPlayService extends Service {
      * 播放下一个音频
      */
     private void next() {
+        playNextPosition();
+    }
+
+    /**
+     * 设置下一曲的位置
+     */
+    private void playNextPosition() {
+        int playmode = getPlayMode();
+        // 三种播放模式 全部循环， 单曲循环， 随机播放
+        if (playmode == AudioPlayService.REPEAT_ALL) {
+            position = (position + 1) >= (audioArrayList.size() - 1) ? 0 : (position + 1);
+        } else if (playmode == AudioPlayService.REPEAT_SINGLE) {
+
+        } else {
+            position = new Random().nextInt(audioArrayList.size() - 1);
+        }
+
+        openAudio(position);
     }
 
     /**
      * 播放上一个音频
      */
     private void pre() {
+        playPrePosition();
+    }
+
+    /**
+     * 找到上一个音频的位置，并且播放
+     */
+    private void playPrePosition() {
+        int playmode = getPlayMode();
+        // 三种播放模式 全部循环， 单曲循环， 随机播放
+        if (playmode == AudioPlayService.REPEAT_ALL) {
+            position = (position - 1) <= 0 ? (audioArrayList.size() - 1) : (position - 1);
+        } else if (playmode == AudioPlayService.REPEAT_SINGLE) {
+
+        } else {
+            position = new Random().nextInt(audioArrayList.size() - 1);
+        }
+
+        openAudio(position);
     }
 
     /**
@@ -300,6 +338,16 @@ public class AudioPlayService extends Service {
      * @param playmode
      */
     private void setPlayMode(int playmode) {
+        this.playmode = playmode;
+        //CacheUtils.putPlaymode(this,"playmode",playmode);
+
+        if(playmode==AudioPlayService.REPEAT_SINGLE){
+            //单曲循环播放-不会触发播放完成的回调
+            mediaPlayer.setLooping(true);
+        }else{
+            //不循环播放
+            mediaPlayer.setLooping(false);
+        }
     }
 
     /**
@@ -308,7 +356,7 @@ public class AudioPlayService extends Service {
      * @return
      */
     private int getPlayMode() {
-        return 0;
+        return 1;
     }
 
 
@@ -325,6 +373,7 @@ public class AudioPlayService extends Service {
 
     /**
      * 判断mediaplay是否为空
+     *
      * @return
      */
     private boolean isNull() {
@@ -333,6 +382,14 @@ public class AudioPlayService extends Service {
         } else {
             return false;
         }
+    }
+
+    /**
+     * 播放到什么位置
+     * @param msec
+     */
+    public void seekTo(int msec){
+        mediaPlayer.seekTo(msec);
     }
 
     private void getDataFromLocal() {

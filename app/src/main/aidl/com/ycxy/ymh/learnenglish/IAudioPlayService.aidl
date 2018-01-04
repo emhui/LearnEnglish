@@ -92,4 +92,6 @@ interface IAudioPlayService {
      * @return
      */
     boolean isNull();
+
+    void seekTo(int mesc);
 }

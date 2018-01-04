@@ -62,25 +62,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     recyclerView.setAdapter(adapter);
                     break;
                 case SHOWAUDIONAME:
-                    if (service != null) {
-                        try {
-                            // 记住切割名字
-                            if (service.getName().equals("")) {
-                                tv_audio_msg.setText("当前没有音乐在播放");
-                            } else {
-                                tv_audio_msg.setText("正在播放 " + service.getName().split("\\.")[0]);
-                            }
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        tv_audio_msg.setText("当前没有音乐在播放");
-                    }
-                    handler.sendEmptyMessageDelayed(SHOWAUDIONAME, 100);
+                    updataUI();
                     break;
             }
         }
     };
+
+    private void updataUI() {
+        if (service != null) {
+            try {
+                updataBtnPlay();
+                // 记住切割名字
+                if (service.getName().equals("")) {
+                    tv_audio_msg.setText("当前没有音乐在播放");
+                } else {
+                    tv_audio_msg.setText("正在播放 " + service.getName().split("\\.")[0]);
+                }
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        } else {
+            tv_audio_msg.setText("当前没有音乐在播放");
+        }
+        handler.sendEmptyMessageDelayed(SHOWAUDIONAME, 100);
+    }
+
+    private void updataBtnPlay() throws RemoteException {
+        if (!service.isPlaying()) {
+            btn_audio_play.setBackgroundResource(R.mipmap.pause);
+        } else {
+            btn_audio_play.setBackgroundResource(R.mipmap.play);
+        }
+    }
 
     private IAudioPlayService service;
     private int position = 0;
@@ -256,7 +269,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_audio_play:
                 try {
-
                     if (service.isNull()) {
                         openAudio();
                     }
@@ -275,7 +287,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
             case R.id.btn_audio_next:
-                Toast.makeText(this, "下一曲", Toast.LENGTH_SHORT).show();
+                try {
+                    service.next();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
                 break;
 
         }
