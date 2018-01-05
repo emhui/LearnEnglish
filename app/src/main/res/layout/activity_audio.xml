@@ -7,6 +7,17 @@
     android:orientation="vertical"
     tools:context="com.ycxy.ymh.activity.AudioActivity">
 
+    <TextView
+        android:id="@+id/tv_show_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10px"
+        android:background="@drawable/touch_bg"
+        android:clickable="true"
+        android:gravity="center"
+        android:text="琵琶行"
+        android:textSize="18dp" />
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,16 +50,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
         <SeekBar
             android:id="@+id/seekbar"
             android:layout_width="wrap_content"
-            android:layout_weight="1"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
         <TextView
             android:id="@+id/tv_show_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="00:10/03:00"/>
+            android:text="00:10/03:00" />
     </LinearLayout>
 
     <LinearLayout
@@ -93,7 +106,7 @@
             style="@style/AudioButtonTheme"
             android:layout_alignParentRight="true"
             android:layout_marginRight="30px"
-            android:background="@drawable/btn_audio_menu_selector" />
+            android:background="@drawable/btn_audio_show_lyric_selector" />
 
     </LinearLayout>
 </LinearLayout>

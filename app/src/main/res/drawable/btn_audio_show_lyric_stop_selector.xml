@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="false">
+        <bitmap android:src="@mipmap/lyric_stop" android:gravity="center" android:tileMode="disabled"/>
+    </item>
+    <item android:state_pressed="true">
+        <bitmap android:src="@mipmap/lyric_stop_press" android:tileMode="disabled" android:gravity="center"/>
+    </item>
+
+</selector>

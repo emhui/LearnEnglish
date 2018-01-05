@@ -15,6 +15,7 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -37,7 +38,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private Button btn_menu;
     private SeekBar seekbar;
     private TextView tv_show_Time;
-
+    private TextView tv_show_name;
     private boolean isPlaying = true;
     private int position = 0;
     private Animation operatingAnim;
@@ -54,6 +55,8 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                     break;
                 case UPDATAUI:
                     updataUI();
+                    handler.removeMessages(UPDATAUI);
+                    handler.sendEmptyMessageDelayed(UPDATAUI, 100);
                     break;
             }
         }
@@ -63,16 +66,15 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private void updataUI() {
         try {
             updataBtnPlay();
+            tv_show_name.setText(service.getName());
             Utils utils = new Utils();
             tv_show_Time.setText(utils.stringForTime(service.getCurrentPosition())
-            + "|" + utils.stringForTime(service.getDuration()));
+            + "/" + utils.stringForTime(service.getDuration()));
             seekbar.setMax(service.getDuration());
             seekbar.setProgress(service.getCurrentPosition());
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        handler.removeMessages(UPDATAUI);
-        handler.sendEmptyMessageDelayed(UPDATAUI, 100);
     }
 
     private ServiceConnection conn = new ServiceConnection() {
@@ -109,9 +111,10 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private void initView() {
         btn_play = findViewById(R.id.btn_audio_play);
         btn_mode = findViewById(R.id.btn_audio_type);
-        btn_pre = findViewById(R.id.btn_audio_next);
+        btn_pre = findViewById(R.id.btn_audio_pre);
         btn_next = findViewById(R.id.btn_audio_next);
         tv_show_Time = findViewById(R.id.tv_show_time);
+        tv_show_name = findViewById(R.id.tv_show_name);
         seekbar = findViewById(R.id.seekbar);
 
         iv_cd = findViewById(R.id.iv_cd);
@@ -179,24 +182,71 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      */
     private void play_method() {
         try {
-            if (service.isNull()) {
+            if (isMediaPlayerNull()) {
                 openAudio();
             }
-
-            if (service.isPlaying()) {
-                stopPlayCD();
-                service.pause();
-                btn_play.setBackgroundResource(R.mipmap.pause);
-                btn_play.setBackgroundResource(R.drawable.btn_audio_pause_selector);
+            if (isPlaying()) {
+                playAudio();
             } else {
-                startPlayCD();
-                service.start();
-                btn_play.setBackgroundResource(R.mipmap.play);
-                btn_play.setBackgroundResource(R.drawable.btn_audio_play_selector);
+                pauseAudio();
             }
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 是否有mediaplayer对象
+     * @return
+     * @throws RemoteException
+     */
+    private boolean isMediaPlayerNull() throws RemoteException {
+        return service.isNull();
+    }
+
+    /**
+     * 当前歌曲是否正在播放
+     * @return
+     * @throws RemoteException
+     */
+    private boolean isPlaying() throws RemoteException {
+        return service.isPlaying();
+    }
+
+    /**
+     * 停止音频
+     * @throws RemoteException
+     */
+    private void pauseAudio() throws RemoteException {
+        startPlayCD();
+        service.start();
+        setBtnPlay();
+    }
+
+    /**
+     * 设置按键样式为play
+     */
+    private void setBtnPlay() {
+        btn_play.setBackgroundResource(R.drawable.btn_audio_play_selector);
+    }
+
+
+
+    /**
+     * 播放音频
+     * @throws RemoteException
+     */
+    private void playAudio() throws RemoteException {
+        stopPlayCD();
+        service.pause();
+        setBtnPause();
+    }
+
+    /**
+     * 设置播放按键样式为pause
+     */
+    private void setBtnPause() {
+        btn_play.setBackgroundResource(R.drawable.btn_audio_pause_selector);
     }
 
     private void stopPlayCD() {
@@ -232,13 +282,13 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private void updataBtnPlay() throws RemoteException {
         if (!service.isPlaying()) {
             stopPlayCD();
-            btn_play.setBackgroundResource(R.mipmap.pause);
+            setBtnPlay();
         } else {
             if (isPlayCD) {
                 startPlayCD();
+                isPlayCD = false;
             }
-            isPlayCD = false;
-            btn_play.setBackgroundResource(R.mipmap.play);
+            setBtnPause();
         }
     }
 

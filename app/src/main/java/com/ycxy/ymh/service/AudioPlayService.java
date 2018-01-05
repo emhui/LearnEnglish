@@ -1,6 +1,9 @@
 package com.ycxy.ymh.service;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -11,6 +14,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.MediaStore;
 
+import com.ycxy.ymh.activity.AudioActivity;
 import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.learnenglish.IAudioPlayService;
 import com.ycxy.ymh.learnenglish.MainActivity;
@@ -223,6 +227,7 @@ public class AudioPlayService extends Service {
     // 启动
     public void start() {
         mediaPlayer.start();
+        setNotify();
     }
 
     /**
@@ -237,6 +242,7 @@ public class AudioPlayService extends Service {
      */
     private void stop() {
         mediaPlayer.stop();
+        cancelNotify();
     }
 
     /**
@@ -295,6 +301,7 @@ public class AudioPlayService extends Service {
      * 设置下一曲的位置
      */
     private void playNextPosition() {
+/*
         int playmode = getPlayMode();
         // 三种播放模式 全部循环， 单曲循环， 随机播放
         if (playmode == AudioPlayService.REPEAT_ALL) {
@@ -304,7 +311,14 @@ public class AudioPlayService extends Service {
         } else {
             position = new Random().nextInt(audioArrayList.size() - 1);
         }
+*/
 
+        int tempPosition = position;
+        if ( (tempPosition + 1) >= (audioArrayList.size()-1) ) {
+            position = 0;
+        } else {
+            position = tempPosition + 1;
+        }
         openAudio(position);
     }
 
@@ -328,7 +342,6 @@ public class AudioPlayService extends Service {
         } else {
             position = new Random().nextInt(audioArrayList.size() - 1);
         }
-
         openAudio(position);
     }
 
@@ -356,7 +369,7 @@ public class AudioPlayService extends Service {
      * @return
      */
     private int getPlayMode() {
-        return 1;
+        return AudioPlayService.REPEAT_ALL;
     }
 
 
@@ -435,5 +448,31 @@ public class AudioPlayService extends Service {
 
             }
         }.start();
+    }
+
+    NotificationManager manager = null;
+    public void setNotify(){
+        manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+         // 获取意图
+        Intent intent = new Intent(this, AudioActivity.class);
+        intent.putExtra("Notification", true);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                1,intent,PendingIntent.FLAG_UPDATE_CURRENT);
+        Notification notification = new Notification.Builder(this)
+                .setSmallIcon(R.mipmap.cd)
+                .setContentText("正在播放" + getName())
+                .setContentTitle("LearnEnglish")
+                .setContentIntent(pendingIntent)
+                .build();
+
+        manager.notify(1, notification);
+    }
+
+    public void cancelNotify(){
+        if (manager != null) {
+            manager.cancel(1);
+            manager = null;
+        }
+
     }
 }

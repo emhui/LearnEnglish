@@ -18,7 +18,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.ycxy.ymh.activity.AudioActivity" />
+        <activity android:name="com.ycxy.ymh.activity.AudioActivity"
+            android:launchMode="singleTask"/>
 
         <service
             android:name="com.ycxy.ymh.service.AudioPlayService"

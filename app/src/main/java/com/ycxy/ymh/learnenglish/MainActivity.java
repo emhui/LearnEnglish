@@ -16,6 +16,9 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -88,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void updataBtnPlay() throws RemoteException {
-        if (!service.isPlaying()) {
+        if (service.isPlaying()) {
             btn_audio_play.setBackgroundResource(R.mipmap.pause);
         } else {
             btn_audio_play.setBackgroundResource(R.mipmap.play);
@@ -143,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initData() {
+        isPermission();
         getDataFromLocal();
         startService();
         handler.sendEmptyMessageDelayed(SHOWAUDIONAME, 100);
@@ -192,8 +196,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 super.run();
-
-                isGrantExternalRW((Activity) MainActivity.this);
                 audioArrayList = new ArrayList<>();
                 ContentResolver resolver = MainActivity.this.getContentResolver();
                 Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
@@ -263,7 +265,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.ll_audio_msg:
-                Toast.makeText(this, "跳转", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(MainActivity.this, AudioActivity.class);
                 startActivity(intent);
                 break;
@@ -274,10 +275,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
 
                     if (service.isPlaying()) {
-                        btn_audio_play.setBackgroundResource(R.mipmap.pause);
+                        btn_audio_play.setBackgroundResource(R.mipmap.play);
                         service.pause();
                     } else {
-                        btn_audio_play.setBackgroundResource(R.mipmap.play);
+                        btn_audio_play.setBackgroundResource(R.mipmap.pause);
                         service.start();
                     }
                     isPlaying = !isPlaying;
@@ -372,6 +373,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
                 return false;
             }
+        }
+    }
+
+    /**
+     * 申请权限访问
+     */
+    public void isPermission() {
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        } else {
+        }
+    }
+
+    /**
+     * 权限访问结果回调
+     *
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case 1:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+                    finish();
+                }
+                break;
         }
     }
 }
