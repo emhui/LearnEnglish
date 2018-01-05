@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.learnenglish.MainActivity;
 import com.ycxy.ymh.learnenglish.R;
+import com.ycxy.ymh.utils.Utils;
 
 import org.w3c.dom.Text;
 
@@ -48,8 +49,8 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder>{
     public void onBindViewHolder(ViewHolder holder, int position) {
         Audio audio = audioArrayList.get(position);
 
-        String name = audio.getName();
-        name = name.split("\\.")[0]; // 音频文件后缀去除 e: a.mp3 = a;
+        String name = new Utils().getAudioName(audio.getName());
+        // name = name.split("\\.")[0]; // 音频文件后缀去除 e: a.mp3 = a;
         holder.tv_audio_name.setText(name);
         holder.tv_audio_artist.setText(audio.getArtist());
     }

@@ -9,26 +9,42 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.alibaba.fastjson.JSON;
+import com.ycxy.ymh.bean.LyricBean;
 import com.ycxy.ymh.learnenglish.IAudioPlayService;
 import com.ycxy.ymh.learnenglish.R;
 import com.ycxy.ymh.service.AudioPlayService;
+import com.ycxy.ymh.utils.Constants;
 import com.ycxy.ymh.utils.Utils;
+import com.zhy.http.okhttp.OkHttpUtils;
+import com.zhy.http.okhttp.callback.FileCallBack;
+import com.zhy.http.okhttp.callback.StringCallback;
+
+import java.io.File;
+
+import me.zhengken.lyricview.LyricView;
+import okhttp3.Call;
 
 public class AudioActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int SHOWAUDIONAME = 0;
     private static final int UPDATAUI = 2;
+    private static final String TAG = "AudioActivity";
+    private static final int FAILED = 3;
+    private static final int LYRICLOADSUCCESS = 4;
     private ImageView iv_cd;
     private ImageView iv_handler;
     private Button btn_play;
@@ -39,12 +55,14 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private SeekBar seekbar;
     private TextView tv_show_Time;
     private TextView tv_show_name;
+    private RelativeLayout rr_cd;
     private boolean isPlaying = true;
     private int position = 0;
     private Animation operatingAnim;
     private RotateAnimation rotate;
-
+    private LyricView lyricView;
     private IAudioPlayService service;
+    private Utils utils = new Utils();
 
     private Handler handler = new Handler() {
         @Override
@@ -58,6 +76,21 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                     handler.removeMessages(UPDATAUI);
                     handler.sendEmptyMessageDelayed(UPDATAUI, 100);
                     break;
+                case FAILED:
+                    Toast.makeText(AudioActivity.this,
+                            "未找到歌词", Toast.LENGTH_SHORT);
+                    break;
+                // 音频下载成功
+                case LYRICLOADSUCCESS:
+                    String audioName = null;
+                    try {
+                        audioName = utils.getAudioName(service.getName());
+                        File file = new File(utils.nameToPath(audioName));
+                        lyricView.setLyricFile(file);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    break;
             }
         }
     };
@@ -66,10 +99,10 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private void updataUI() {
         try {
             updataBtnPlay();
-            tv_show_name.setText(service.getName());
-            Utils utils = new Utils();
+            lyricView.setCurrentTimeMillis(service.getCurrentPosition());
+            tv_show_name.setText(service.getName().split("\\.")[0]);
             tv_show_Time.setText(utils.stringForTime(service.getCurrentPosition())
-            + "/" + utils.stringForTime(service.getDuration()));
+                    + "/" + utils.stringForTime(service.getDuration()));
             seekbar.setMax(service.getDuration());
             seekbar.setProgress(service.getCurrentPosition());
         } catch (RemoteException e) {
@@ -93,6 +126,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio);
+        utils.hasFile(); // 建立一个存放歌词的文件目录
         clsTilte();
         initView();
         initData();
@@ -113,10 +147,12 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         btn_mode = findViewById(R.id.btn_audio_type);
         btn_pre = findViewById(R.id.btn_audio_pre);
         btn_next = findViewById(R.id.btn_audio_next);
+        btn_menu = findViewById(R.id.btn_audio_menu);
         tv_show_Time = findViewById(R.id.tv_show_time);
         tv_show_name = findViewById(R.id.tv_show_name);
         seekbar = findViewById(R.id.seekbar);
-
+        lyricView = findViewById(R.id.lyric);
+        rr_cd = findViewById(R.id.rr_cd);
         iv_cd = findViewById(R.id.iv_cd);
         iv_handler = findViewById(R.id.iv_handler);
 
@@ -133,10 +169,16 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         btn_pre.setOnClickListener(this);
         btn_mode.setOnClickListener(this);
         btn_next.setOnClickListener(this);
-//        btn_menu.setOnClickListener(this);
+        btn_menu.setOnClickListener(this);
 
         seekbar.setOnSeekBarChangeListener(new MyOnSeekBarChangeListener());
         handler.sendEmptyMessageDelayed(SHOWAUDIONAME, 100);
+        lyricView.setOnPlayerClickListener(new LyricView.OnPlayerClickListener() {
+            @Override
+            public void onPlayerClicked(long l, String s) {
+                Toast.makeText(AudioActivity.this, s, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
@@ -173,9 +215,42 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                 }
                 break;
             case R.id.btn_audio_menu:
+                switchCDorLyric();
+                isPlayCD = !isPlayCD;
                 break;
         }
     }
+
+    private void switchCDorLyric() {
+        try {
+            if (!isPlayCD) {
+                // 获取真正名字The Piano Guys-Because of You.mp3
+                String audioName = utils.getAudioName(service.getName());
+                Log.d(TAG, "switchCDorLyric: " + audioName);
+                // 判断本地是否已存在该歌曲
+                if (utils.isLyricExit(audioName)) {
+                    // 存在直接将歌词放入
+                    File file = new File(utils.nameToPath(audioName));
+                    Log.d(TAG, "switchCDorLyric: " + file.getAbsolutePath());
+                    lyricView.setLyricFile(file);
+                } else {
+                    // 从网络加载歌词
+                    loadLyricFormNet();
+                }
+                lyricView.setVisibility(View.VISIBLE);
+                rr_cd.setVisibility(View.GONE);
+                btn_menu.setBackgroundResource(R.drawable.btn_audio_show_lyric_stop_selector);
+            } else {
+                lyricView.setVisibility(View.GONE);
+                rr_cd.setVisibility(View.VISIBLE);
+                btn_menu.setBackgroundResource(R.drawable.btn_audio_show_lyric_selector);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 
     /**
      * 封装了播放的逻辑
@@ -197,6 +272,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
 
     /**
      * 是否有mediaplayer对象
+     *
      * @return
      * @throws RemoteException
      */
@@ -206,6 +282,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
 
     /**
      * 当前歌曲是否正在播放
+     *
      * @return
      * @throws RemoteException
      */
@@ -215,6 +292,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
 
     /**
      * 停止音频
+     *
      * @throws RemoteException
      */
     private void pauseAudio() throws RemoteException {
@@ -231,9 +309,9 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     }
 
 
-
     /**
      * 播放音频
+     *
      * @throws RemoteException
      */
     private void playAudio() throws RemoteException {
@@ -284,10 +362,10 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             stopPlayCD();
             setBtnPlay();
         } else {
-            if (isPlayCD) {
+/*            if (isPlayCD) {
                 startPlayCD();
                 isPlayCD = false;
-            }
+            }*/
             setBtnPause();
         }
     }
@@ -318,14 +396,95 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     @Override
     protected void onResume() {
         super.onResume();
-        try{
-            if (service!=null) {
-                if (service.isPlaying()){
-                    isPlayCD = true;
+        try {
+            if (service != null) {
+                if (service.isPlaying()) {
+                    //  isPlayCD = true;
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
 
+        }
+    }
+
+    private void loadLyricFormNet() {
+        try {
+            Log.d(TAG, "loadLyricFormNet: "+Constants.LYRICAPI + utils.getAudioName(service.getName()));
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        try {
+            OkHttpUtils
+                    .get()
+                    .url(Constants.LYRICAPI + utils.getAudioName(service.getName()))
+                    .build()
+                    .execute(new StringCallback() {
+                        @Override
+                        public void onError(Call call, Exception e, int id) {
+                            Log.d(TAG, "onError: ");
+                            // rl.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onResponse(String response, int id) {
+                            Log.d(TAG, "onResponse: " + response);
+                            parseJSON(response);/*
+                            rl.setVisibility(View.GONE);*/
+                        }
+                    });
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    LyricBean bean;
+
+    /**
+     * 序列化数据
+     *
+     * @param response
+     */
+    private void parseJSON(String response) {
+        bean = JSON.parseObject(response, LyricBean.class);
+        Log.d(TAG, "parseJSON: " + bean.getCount());
+        // 判断是否有歌词资源
+        if (bean.getCount() > 0) {
+            // 开始下载歌词
+            String url = bean.getResult().get(0).getLrc();
+            Log.d(TAG, "parseJSON: " + url);
+            loadLyricFormNet(url);
+        } else {
+            handler.sendEmptyMessage(FAILED);
+        }
+    }
+
+    /**
+     * 下载歌词到本地
+     *
+     * @param url
+     */
+    private void loadLyricFormNet(String url) {
+        try {
+            OkHttpUtils//
+                    .get()//
+                    .url(url)//
+                    .build()//
+                    .execute(new FileCallBack(Constants.STROAGEPATH, utils.getAudioName(service.getName()) + ".lrc")//
+                    {
+                        @Override
+                        public void onError(Call call, Exception e, int id) {
+                            Log.d(TAG, "onError: ---------------" + e.toString());
+                        }
+
+                        @Override
+                        public void onResponse(File response, int id) {
+                            Log.d(TAG, "onResponse: ");
+                            // readFile(response);
+                            handler.sendEmptyMessage(LYRICLOADSUCCESS);
+                        }
+                    });
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 }

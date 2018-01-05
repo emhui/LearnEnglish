@@ -10,18 +10,32 @@
     <TextView
         android:id="@+id/tv_show_name"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10px"
-        android:background="@drawable/touch_bg"
+        android:layout_height="100px"
         android:clickable="true"
         android:gravity="center"
+        android:background="#aa08ce70"
+        android:singleLine="true"
         android:text="琵琶行"
+        android:textColor="#ffffff"
         android:textSize="18dp" />
 
+    <me.zhengken.lyricview.LyricView
+        android:visibility="gone"
+        android:id="@+id/lyric"
+        app:textColor="#000000"
+        app:hintColor="#8D8D8D"
+        app:highlightColor="#08ce70"
+        app:hint="歌词文件未找到!"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+
     <RelativeLayout
+        android:id="@+id/rr_cd"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:visibility="visible">
 
         <RelativeLayout
             android:layout_width="500px"

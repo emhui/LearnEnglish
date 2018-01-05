@@ -3,6 +3,7 @@ package com.ycxy.ymh.utils;
 import android.content.Context;
 import android.net.TrafficStats;
 
+import java.io.File;
 import java.util.Formatter;
 import java.util.Locale;
 
@@ -79,5 +80,52 @@ public class Utils {
         return  netSpeed;
     }
 
+    /**
+     * 建立一个存储音乐歌词的文件
+     */
+    public void hasFile() {
+        File file = new File(Constants.STROAGEPATH);
+        if (!file.exists()) {
+            file.mkdir();
+        }
+    }
 
+    /**
+     * 判断歌词是否存在
+     * @return
+     */
+    public boolean isLyricExit(String songName) {
+        // File file = new File(STROAGEPATH + File.separator + songName + ".lrc");
+        File file = new File(Constants.STROAGEPATH);
+        File[] files = file.listFiles();
+
+        for (File f : files) {
+            if (f.getName().equals(songName + ".lrc")) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
+     * 获取音频的真正名字，列如 Ruppina-Free Will.mp3
+     * @param str
+     * @return
+     */
+    public String getAudioName(String str){
+        // 去除后缀
+        str = str.split("\\.")[0];
+        // 艺术家-音频名
+        if (str.contains("-")||str.contains("——")){
+            str = str.split("-")[1];
+        }
+        // 音频_类型
+        if (str.contains("_")) {
+            str = str.split("_")[0];
+        }
+        return str.trim();
+    }
+
+    public String nameToPath(String audioName){
+        return Constants.STROAGEPATH + File.separator + audioName + ".lrc";
+    }
 }

@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final int SUCCESSQUERY = 0;
     private static final int SHOWAUDIONAME = 1;
+    private static final String TAG = "MainActivity";
     private ArrayList<Audio> audioArrayList;
     private LinearLayout ll_audio_msg;
     private RecyclerView recyclerView;
@@ -225,7 +227,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         String data = cursor.getString(3);//视频的播放地址
                         mediaItem.setData(data);
-
+                        Log.d(TAG, "run:data " + data);
                         String artist = cursor.getString(4);//艺术家
                         mediaItem.setArtist(artist);
                     }
@@ -233,7 +235,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 //Handler发消息
                 handler.sendEmptyMessage(SUCCESSQUERY);
-
 
             }
         }.start();
@@ -381,9 +382,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     public void isPermission() {
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(MainActivity.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         } else {
         }
     }
