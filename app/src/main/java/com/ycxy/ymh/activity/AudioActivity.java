@@ -23,19 +23,25 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
+import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.bean.LyricBean;
 import com.ycxy.ymh.learnenglish.IAudioPlayService;
 import com.ycxy.ymh.learnenglish.R;
 import com.ycxy.ymh.service.AudioPlayService;
 import com.ycxy.ymh.utils.Constants;
 import com.ycxy.ymh.utils.Utils;
+import com.ycxy.ymh.view.LyricView;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.FileCallBack;
 import com.zhy.http.okhttp.callback.StringCallback;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.io.File;
 
-import me.zhengken.lyricview.LyricView;
+
 import okhttp3.Call;
 
 public class AudioActivity extends AppCompatActivity implements View.OnClickListener {
@@ -99,6 +105,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         }
     };
     private boolean isPlayCD = false;
+    private Audio audio = null;
 
     private void updataUI() {
         try {
@@ -137,6 +144,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     }
 
     private void initData() {
+        EventBus.getDefault().register(this);
         startService();
         handler.sendEmptyMessageDelayed(UPDATAUI, 100);
     }
@@ -177,6 +185,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
 
         seekbar.setOnSeekBarChangeListener(new MyOnSeekBarChangeListener());
         handler.sendEmptyMessageDelayed(SHOWAUDIONAME, 100);
+        // 原来lyric
         lyricView.setOnPlayerClickListener(new LyricView.OnPlayerClickListener() {
             @Override
             public void onPlayerClicked(long l, String s) {
@@ -207,9 +216,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             case R.id.btn_audio_pre:
                 try {
                     service.pre();
-                    getLyric();
-                    stopPlayCD();
-                    startPlayCD();
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -217,9 +223,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             case R.id.btn_audio_next:
                 try {
                     service.next();
-                    getLyric();
-                    stopPlayCD();
-                    startPlayCD();
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -324,7 +327,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      * 设置按键样式为play
      */
     private void setBtnPlay() {
-        // btn_play.setBackgroundResource(R.drawable.btn_audio_play_selector);
         btn_play.setBackgroundResource(R.drawable.btn_play_selector);
     }
 
@@ -340,20 +342,33 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         setBtnPause();
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updataCDandLyric(Audio audio){
+        startPlayCD();
+        try {
+            getLyric();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * 设置播放按键样式为pause
      */
     private void setBtnPause() {
-        // btn_play.setBackgroundResource(R.drawable.btn_audio_pause_selector);
         btn_play.setBackgroundResource(R.drawable.btn_pause_selector);
     }
 
+    /**
+     * 开始停止CD
+     */
     private void stopPlayCD() {
         iv_cd.clearAnimation();
         iv_handler.clearAnimation();
     }
 
-    private void startPlayCD() {
+
+    public void startPlayCD() {
         if (operatingAnim != null && rotate != null) {
             iv_cd.startAnimation(operatingAnim);
             iv_handler.startAnimation(rotate);
@@ -509,5 +524,11 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 }

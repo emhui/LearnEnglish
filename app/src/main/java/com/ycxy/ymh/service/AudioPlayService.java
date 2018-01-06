@@ -24,6 +24,8 @@ import com.ycxy.ymh.learnenglish.IAudioPlayService;
 import com.ycxy.ymh.learnenglish.MainActivity;
 import com.ycxy.ymh.learnenglish.R;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
@@ -241,6 +243,8 @@ public class AudioPlayService extends Service {
 
         @Override
         public void onPrepared(MediaPlayer mp) {
+            // 发送消息
+            EventBus.getDefault().post(audio);
             start();
         }
     }
