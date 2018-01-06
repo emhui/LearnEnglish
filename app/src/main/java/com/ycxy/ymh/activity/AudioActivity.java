@@ -189,7 +189,11 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         lyricView.setOnPlayerClickListener(new LyricView.OnPlayerClickListener() {
             @Override
             public void onPlayerClicked(long l, String s) {
-                Toast.makeText(AudioActivity.this, s, Toast.LENGTH_SHORT).show();
+                try {
+                    service.seekTo((int) l);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
