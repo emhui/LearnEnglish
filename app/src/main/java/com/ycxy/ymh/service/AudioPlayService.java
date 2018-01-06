@@ -10,9 +10,13 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.MediaStore;
+import android.support.v4.app.NotificationCompat;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.ycxy.ymh.activity.AudioActivity;
 import com.ycxy.ymh.bean.Audio;
@@ -26,6 +30,7 @@ import java.util.Random;
 
 public class AudioPlayService extends Service {
 
+    private static final String TAG = "AudioPlayService";
     private ArrayList<Audio> audioArrayList;
     private int position = 0;
     /**
@@ -164,6 +169,7 @@ public class AudioPlayService extends Service {
      */
     public void openAudio(int position) {
         this.position = position;
+        Log.d(TAG, "openAudio: " + position);
         if (audioArrayList != null && audioArrayList.size() > 0) {
 
             audio = audioArrayList.get(position);
@@ -181,10 +187,10 @@ public class AudioPlayService extends Service {
                 mediaPlayer.setDataSource(audio.getData());
                 mediaPlayer.prepareAsync();
 
-                if(playmode==AudioPlayService.REPEAT_SINGLE){
+                if (playmode == AudioPlayService.REPEAT_SINGLE) {
                     //单曲循环播放-不会触发播放完成的回调
                     mediaPlayer.setLooping(true);
-                }else{
+                } else {
                     //不循环播放
                     mediaPlayer.setLooping(false);
                 }
@@ -199,15 +205,27 @@ public class AudioPlayService extends Service {
         }
     }
 
+    /**
+     * 由于不知道的错误会导致调用，所以暂时不适用该方法
+     * 详细可以看错误码 http://www.cnblogs.com/getherBlog/p/3939033.html
+     */
     class MyOnErrorListener implements MediaPlayer.OnErrorListener {
 
+        /**
+         * @param mp
+         * @param what
+         * @param extra
+         * @return false 则执行OnCompletionListener方法， 设置为true不处理
+         */
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
-            next();
             return true;
         }
     }
 
+    /**
+     * 播放完成后自动切换下一曲
+     */
     class MyOnCompletionListener implements MediaPlayer.OnCompletionListener {
 
         @Override
@@ -216,6 +234,9 @@ public class AudioPlayService extends Service {
         }
     }
 
+    /**
+     * 准备好开始播放
+     */
     class MyOnPreparedListener implements MediaPlayer.OnPreparedListener {
 
         @Override
@@ -313,12 +334,12 @@ public class AudioPlayService extends Service {
         }
 */
 
-        int tempPosition = position;
-        if ( (tempPosition + 1) >= (audioArrayList.size()-1) ) {
+        position++;
+
+        if (position >= audioArrayList.size() - 1) {
             position = 0;
-        } else {
-            position = tempPosition + 1;
         }
+
         openAudio(position);
     }
 
@@ -335,14 +356,25 @@ public class AudioPlayService extends Service {
     private void playPrePosition() {
         int playmode = getPlayMode();
         // 三种播放模式 全部循环， 单曲循环， 随机播放
-        if (playmode == AudioPlayService.REPEAT_ALL) {
+/*        if (playmode == AudioPlayService.REPEAT_ALL) {
             position = (position - 1) <= 0 ? (audioArrayList.size() - 1) : (position - 1);
         } else if (playmode == AudioPlayService.REPEAT_SINGLE) {
 
         } else {
             position = new Random().nextInt(audioArrayList.size() - 1);
+        }*/
+
+        position--;
+
+        if (position <= 0) {
+            position = audioArrayList.size() - 1;
         }
-        openAudio(position);
+
+        if (position < audioArrayList.size()) {
+            openAudio(position);
+        } else {
+            position = audioArrayList.size() - 1;
+        }
     }
 
     /**
@@ -354,10 +386,10 @@ public class AudioPlayService extends Service {
         this.playmode = playmode;
         //CacheUtils.putPlaymode(this,"playmode",playmode);
 
-        if(playmode==AudioPlayService.REPEAT_SINGLE){
+        if (playmode == AudioPlayService.REPEAT_SINGLE) {
             //单曲循环播放-不会触发播放完成的回调
             mediaPlayer.setLooping(true);
-        }else{
+        } else {
             //不循环播放
             mediaPlayer.setLooping(false);
         }
@@ -399,9 +431,10 @@ public class AudioPlayService extends Service {
 
     /**
      * 播放到什么位置
+     *
      * @param msec
      */
-    public void seekTo(int msec){
+    public void seekTo(int msec) {
         mediaPlayer.seekTo(msec);
     }
 
@@ -451,24 +484,30 @@ public class AudioPlayService extends Service {
     }
 
     NotificationManager manager = null;
-    public void setNotify(){
-        manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-         // 获取意图
-        Intent intent = new Intent(this, AudioActivity.class);
-        intent.putExtra("Notification", true);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                1,intent,PendingIntent.FLAG_UPDATE_CURRENT);
-        Notification notification = new Notification.Builder(this)
-                .setSmallIcon(R.mipmap.cd)
-                .setContentText("正在播放" + getName())
-                .setContentTitle("LearnEnglish")
-                .setContentIntent(pendingIntent)
-                .build();
 
-        manager.notify(1, notification);
+    public void setNotify() {
+        // Andriod O 可能有问题
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        } else {
+            manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            // 获取意图
+            Intent intent = new Intent(this, AudioActivity.class);
+            intent.putExtra("Notification", true);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                    1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            // Notification和版本有关系，每一代的 Notification都会进行更改，因此推荐使用V4包下的Notification
+            Notification notification = new NotificationCompat.Builder(this)
+                    .setSmallIcon(R.mipmap.cd)
+                    .setContentText("正在播放" + getName())
+                    .setContentTitle("LearnEnglish")
+                    .setContentIntent(pendingIntent)
+                    .build();
+
+            manager.notify(1, notification);
+        }
     }
 
-    public void cancelNotify(){
+    public void cancelNotify() {
         if (manager != null) {
             manager.cancel(1);
             manager = null;

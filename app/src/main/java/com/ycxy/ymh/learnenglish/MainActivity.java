@@ -1,7 +1,6 @@
 package com.ycxy.ymh.learnenglish;
 
 import android.Manifest;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -22,18 +21,15 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.ycxy.ymh.activity.AudioActivity;
 import com.ycxy.ymh.adapter.AudioAdapter;
@@ -74,14 +70,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     };
 
     private void updataUI() {
-        if (service != null) {
+        if (iService != null) {
             try {
                 updataBtnPlay();
                 // 记住切割名字
-                if (service.getName().equals("")) {
+                if (iService.getName().equals("")) {
                     tv_audio_msg.setText("当前没有音乐在播放");
                 } else {
-                    tv_audio_msg.setText("正在播放 " + service.getName().split("\\.")[0]);
+                    tv_audio_msg.setText("正在播放 " + iService.getName().split("\\.")[0]);
                 }
             } catch (RemoteException e) {
                 e.printStackTrace();
@@ -93,27 +89,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void updataBtnPlay() throws RemoteException {
-        if (service.isPlaying()) {
+        if (iService.isPlaying()) {
             btn_audio_play.setBackgroundResource(R.mipmap.pause);
         } else {
             btn_audio_play.setBackgroundResource(R.mipmap.play);
         }
     }
 
-    private IAudioPlayService service;
+    private IAudioPlayService iService;
     private int position = 0;
     private ServiceConnection conn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            service = IAudioPlayService.Stub.asInterface(iBinder);
+            iService = IAudioPlayService.Stub.asInterface(iBinder);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             try {
-                if (service != null) {
-                    service.stop();
-                    service = null;
+                if (iService != null) {
+                    iService.stop();
+                    iService = null;
                 }
             } catch (Exception e) {
 
@@ -122,9 +118,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     };
 
     private void openAudio() {
-        if (service != null) {
+        if (iService != null) {
             try {
-                service.openAudio(position);
+                iService.openAudio(position);
+                Log.d(TAG, "openAudio: " + position);
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -176,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onItemClick(RecyclerView.ViewHolder vh) {
                 // 开始播放音乐
                 position = vh.getAdapterPosition();
+                Log.d(TAG, "onItemClick: " + position);
                 openAudio();
             }
         });
@@ -250,7 +248,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static boolean isGrantExternalRW(Activity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && activity.checkSelfPermission(
                 Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-
             activity.requestPermissions(new String[]{
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -271,16 +268,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_audio_play:
                 try {
-                    if (service.isNull()) {
+                    if (iService.isNull()) {
                         openAudio();
                     }
 
-                    if (service.isPlaying()) {
+                    if (iService.isPlaying()) {
                         btn_audio_play.setBackgroundResource(R.mipmap.play);
-                        service.pause();
+                        iService.pause();
                     } else {
                         btn_audio_play.setBackgroundResource(R.mipmap.pause);
-                        service.start();
+                        iService.start();
                     }
                     isPlaying = !isPlaying;
                 } catch (RemoteException e) {
@@ -290,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_audio_next:
                 try {
-                    service.next();
+                    iService.next();
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }

@@ -203,6 +203,9 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             case R.id.btn_audio_pre:
                 try {
                     service.pre();
+                    getLyric();
+                    stopPlayCD();
+                    startPlayCD();
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -210,6 +213,9 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             case R.id.btn_audio_next:
                 try {
                     service.next();
+                    getLyric();
+                    stopPlayCD();
+                    startPlayCD();
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -224,19 +230,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private void switchCDorLyric() {
         try {
             if (!isPlayCD) {
-                // 获取真正名字The Piano Guys-Because of You.mp3
-                String audioName = utils.getAudioName(service.getName());
-                Log.d(TAG, "switchCDorLyric: " + audioName);
-                // 判断本地是否已存在该歌曲
-                if (utils.isLyricExit(audioName)) {
-                    // 存在直接将歌词放入
-                    File file = new File(utils.nameToPath(audioName));
-                    Log.d(TAG, "switchCDorLyric: " + file.getAbsolutePath());
-                    lyricView.setLyricFile(file);
-                } else {
-                    // 从网络加载歌词
-                    loadLyricFormNet();
-                }
+                getLyric();
                 lyricView.setVisibility(View.VISIBLE);
                 rr_cd.setVisibility(View.GONE);
                 btn_menu.setBackgroundResource(R.drawable.btn_audio_show_lyric_stop_selector);
@@ -249,6 +243,26 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             e.printStackTrace();
         }
 
+    }
+
+    /**
+     * 获取歌词
+     * @throws RemoteException
+     */
+    private void getLyric() throws RemoteException {
+        // 获取真正名字The Piano Guys-Because of You.mp3
+        String audioName = utils.getAudioName(service.getName());
+        Log.d(TAG, "switchCDorLyric: " + audioName);
+        // 判断本地是否已存在该歌曲
+        if (utils.isLyricExit(audioName)) {
+            // 存在直接将歌词放入
+            File file = new File(utils.nameToPath(audioName));
+            Log.d(TAG, "switchCDorLyric: " + file.getAbsolutePath());
+            lyricView.setLyricFile(file);
+        } else {
+            // 从网络加载歌词
+            loadLyricFormNet();
+        }
     }
 
 
@@ -396,17 +410,21 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     @Override
     protected void onResume() {
         super.onResume();
-        try {
+        startPlayCD();
+/*        try {
             if (service != null) {
                 if (service.isPlaying()) {
-                    //  isPlayCD = true;
+                    startPlayCD();
                 }
             }
         } catch (Exception e) {
 
-        }
+        }*/
     }
 
+    /**
+     * 从网络加载歌词
+     */
     private void loadLyricFormNet() {
         try {
             Log.d(TAG, "loadLyricFormNet: "+Constants.LYRICAPI + utils.getAudioName(service.getName()));
@@ -422,14 +440,12 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                         @Override
                         public void onError(Call call, Exception e, int id) {
                             Log.d(TAG, "onError: ");
-                            // rl.setVisibility(View.GONE);
                         }
 
                         @Override
                         public void onResponse(String response, int id) {
                             Log.d(TAG, "onResponse: " + response);
-                            parseJSON(response);/*
-                            rl.setVisibility(View.GONE);*/
+                            parseJSON(response);
                         }
                     });
         } catch (RemoteException e) {
