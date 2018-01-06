@@ -47,10 +47,14 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private static final int LYRICLOADSUCCESS = 4;
     private ImageView iv_cd;
     private ImageView iv_handler;
-    private Button btn_play;
+/*    private Button btn_play;
     private Button btn_next;
     private Button btn_pre;
-    private Button btn_mode;
+    private Button btn_mode;  */
+    private ImageView btn_play;
+    private ImageView btn_next;
+    private ImageView btn_pre;
+    private ImageView btn_mode;
     private Button btn_menu;
     private SeekBar seekbar;
     private TextView tv_show_Time;
@@ -233,6 +237,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                 getLyric();
                 lyricView.setVisibility(View.VISIBLE);
                 rr_cd.setVisibility(View.GONE);
+//                btn_menu.setBackgroundResource(R.drawable.btn_audio_show_lyric_stop_selector);
                 btn_menu.setBackgroundResource(R.drawable.btn_audio_show_lyric_stop_selector);
             } else {
                 lyricView.setVisibility(View.GONE);
@@ -319,7 +324,8 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      * 设置按键样式为play
      */
     private void setBtnPlay() {
-        btn_play.setBackgroundResource(R.drawable.btn_audio_play_selector);
+        // btn_play.setBackgroundResource(R.drawable.btn_audio_play_selector);
+        btn_play.setBackgroundResource(R.drawable.btn_play_selector);
     }
 
 
@@ -338,7 +344,8 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      * 设置播放按键样式为pause
      */
     private void setBtnPause() {
-        btn_play.setBackgroundResource(R.drawable.btn_audio_pause_selector);
+        // btn_play.setBackgroundResource(R.drawable.btn_audio_pause_selector);
+        btn_play.setBackgroundResource(R.drawable.btn_pause_selector);
     }
 
     private void stopPlayCD() {

@@ -322,24 +322,11 @@ public class AudioPlayService extends Service {
      * 设置下一曲的位置
      */
     private void playNextPosition() {
-/*
-        int playmode = getPlayMode();
-        // 三种播放模式 全部循环， 单曲循环， 随机播放
-        if (playmode == AudioPlayService.REPEAT_ALL) {
-            position = (position + 1) >= (audioArrayList.size() - 1) ? 0 : (position + 1);
-        } else if (playmode == AudioPlayService.REPEAT_SINGLE) {
-
-        } else {
-            position = new Random().nextInt(audioArrayList.size() - 1);
-        }
-*/
 
         position++;
-
-        if (position >= audioArrayList.size() - 1) {
+        if (position > audioArrayList.size() - 1) {
             position = 0;
         }
-
         openAudio(position);
     }
 
@@ -355,26 +342,11 @@ public class AudioPlayService extends Service {
      */
     private void playPrePosition() {
         int playmode = getPlayMode();
-        // 三种播放模式 全部循环， 单曲循环， 随机播放
-/*        if (playmode == AudioPlayService.REPEAT_ALL) {
-            position = (position - 1) <= 0 ? (audioArrayList.size() - 1) : (position - 1);
-        } else if (playmode == AudioPlayService.REPEAT_SINGLE) {
-
-        } else {
-            position = new Random().nextInt(audioArrayList.size() - 1);
-        }*/
-
         position--;
-
-        if (position <= 0) {
+        if (position < 0) {
             position = audioArrayList.size() - 1;
         }
-
-        if (position < audioArrayList.size()) {
-            openAudio(position);
-        } else {
-            position = audioArrayList.size() - 1;
-        }
+        openAudio(position);
     }
 
     /**
