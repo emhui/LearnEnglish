@@ -20,17 +20,19 @@
         android:textSize="18dp" />
 
    <com.ycxy.ymh.view.LyricView
+        android:clickable="true"
         android:id="@+id/lyric"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:visibility="gone"
         app:highlightColor="#08ce70"
-        app:hint="歌词文件未找到!"
+        app:hint="抱歉，未找到歌词!"
         app:hintColor="#8D8D8D"
         app:textColor="#000000" />
 
     <RelativeLayout
+        android:clickable="true"
         android:id="@+id/rr_cd"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -69,7 +71,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginBottom="5dp"
+            >
 
             <SeekBar
                 android:id="@+id/seekbar"

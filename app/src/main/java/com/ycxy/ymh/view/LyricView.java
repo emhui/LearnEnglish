@@ -19,6 +19,7 @@ import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -126,7 +127,7 @@ public class LyricView extends View {
     private String mCurrentLyricFilePath = null;
 
     private OnPlayerClickListener mClickListener;
-
+    private OnPlayerSingleClickListener mSingleClickListener;
 
     public LyricView(Context context) {
         super(context);
@@ -153,7 +154,7 @@ public class LyricView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-
+        detector.onTouchEvent(event);
         if (mVelocityTracker == null) {
             mVelocityTracker = VelocityTracker.obtain();
         }
@@ -276,6 +277,10 @@ public class LyricView extends View {
 
     public void setOnPlayerClickListener(OnPlayerClickListener mClickListener) {
         this.mClickListener = mClickListener;
+    }
+
+    public void setOnPlayerSingleClickListener(OnPlayerSingleClickListener mSingleClickListener) {
+        this.mSingleClickListener = mSingleClickListener;
     }
 
     public void setAlignment(@Alignment int alignment) {
@@ -715,7 +720,6 @@ public class LyricView extends View {
                 inputStream.close();
                 inputStreamReader.close();
                 // 排序
-                //2.排序
                 Collections.sort(lyricInfo.songLines, new Comparator<LineInfo>() {
                     @Override
                     public int compare(LineInfo lhs, LineInfo rhs) {
@@ -770,12 +774,7 @@ public class LyricView extends View {
             return;
         }
         if (index >= 9 && line.trim().length() > index + 1) {
-            // lyrics
             parsedLyric(lyricInfo,line);
-/*            LineInfo lineInfo = new LineInfo();
-            lineInfo.content = line.substring(10, line.length());
-            lineInfo.start = measureStartTimeMillis(line.substring(0, index));
-            lyricInfo.songLines.add(lineInfo);*/
         }
     }
 
@@ -860,6 +859,10 @@ public class LyricView extends View {
 
     public interface OnPlayerClickListener {
         void onPlayerClicked(long progress, String content);
+    }
+
+    public interface OnPlayerSingleClickListener{
+        void onPlayerSingleClicked();
     }
 
     /**
@@ -974,4 +977,16 @@ public class LyricView extends View {
 
         return result;
     }
+
+    // 添加手势识别器
+    GestureDetector detector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            // 调用回调函数
+            if (!mFling) {
+                mSingleClickListener.onPlayerSingleClicked();
+            }
+            return super.onSingleTapConfirmed(e);
+        }
+    });
 }

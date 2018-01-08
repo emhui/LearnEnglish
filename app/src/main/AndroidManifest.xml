@@ -22,7 +22,8 @@
             </intent-filter>
         </activity>
         <activity android:name="com.ycxy.ymh.activity.AudioActivity"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:configChanges="screenSize|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
