@@ -979,7 +979,7 @@ public class LyricView extends View {
     }
 
     // 添加手势识别器
-    GestureDetector detector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+    GestureDetector detector = new GestureDetector(getContext(),new GestureDetector.SimpleOnGestureListener() {
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
             // 调用回调函数
