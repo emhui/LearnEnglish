@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
 import com.ycxy.ymh.bean.LyricBean;
+import com.ycxy.ymh.bean.ResultBean;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.FileCallBack;
 import com.zhy.http.okhttp.callback.StringCallback;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 
 import okhttp3.Call;
 
@@ -43,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
     private EditText ed_name;
     private String url = "http://geci.me/api/lyric/";
     private String STROAGEPATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "lyric";
-    LyricBean bean;
     private String songName = "";
     private ProgressBar pb;
     private RelativeLayout rl;
@@ -139,11 +140,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void parseJSON(String response) {
+        lyricNum = 0;
+        lyricIndex = 0;
         bean = JSON.parseObject(response, LyricBean.class);
         Log.d(TAG, "parseJSON: " + bean.getCount());
         // 判断是否有歌词资源
         if (bean.getCount() > 0) {
+            lyricNum = bean.getCount();
             // 开始下载歌词
+            lyricUrlList = bean.getResult();
+            Log.d(TAG, "parseJSON: " + lyricIndex + "lyricNum -->" + lyricNum);
             String url = bean.getResult().get(0).getLrc();
             Log.d(TAG, "parseJSON: " + url);
             downloadLyric(url);
@@ -151,6 +157,11 @@ public class MainActivity extends AppCompatActivity {
             handler.sendEmptyMessage(FAILED);
         }
     }
+
+    LyricBean bean;
+    int lyricNum = 0;
+    int lyricIndex = 0;
+    List<ResultBean> lyricUrlList ;
 
     private void downloadLyric(String url) {
         OkHttpUtils//
@@ -167,7 +178,13 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(File response, int id) {
                         Log.d(TAG, "onResponse: ");
-                        readFile(response);
+                        if (isRightLyric(response)) {
+                            readFile(response);
+                        } else {
+                            if (lyricIndex++ <= lyricNum -1) {
+                                downloadLyric(lyricUrlList.get(lyricIndex).getLrc());
+                            }
+                        }
                     }
                 });
     }
@@ -242,5 +259,42 @@ public class MainActivity extends AppCompatActivity {
         if (!file.exists()) {
             file.mkdir();
         }
+    }
+
+    /**
+     * 检验下载的歌词文件是否正确
+     *
+     * @param response
+     * @return
+     */
+    private boolean isRightLyric(File response) {
+        FileReader reader = null;
+        BufferedReader bufferedReader = null;
+        String txt = "";
+        boolean isRightLyric = false;
+        try {
+            reader = new FileReader(response);
+            bufferedReader = new BufferedReader(reader);
+            String str = "";
+            while ((str = bufferedReader.readLine()) != null) {
+                // 含有 [] 则为正确歌词
+                if (str.contains("[") || str.contains("]")) {
+                    isRightLyric = true;
+                    break;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                reader.close();
+                bufferedReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return isRightLyric;
     }
 }

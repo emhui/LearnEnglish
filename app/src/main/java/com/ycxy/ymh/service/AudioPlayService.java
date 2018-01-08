@@ -60,6 +60,10 @@ public class AudioPlayService extends Service {
      * 播放模式
      */
     private int playmode = REPEAT_ALL;
+    /**
+     * 第三方音频的地址
+     */
+    private String otherPath = null;
 
     @Override
     public void onCreate() {
@@ -87,6 +91,11 @@ public class AudioPlayService extends Service {
         }
 
         @Override
+        public void openOtherAudio(String path) throws RemoteException {
+            service.openOtherAudio(path);
+        }
+
+        @Override
         public void start() throws RemoteException {
             service.start();
         }
@@ -103,7 +112,9 @@ public class AudioPlayService extends Service {
 
         @Override
         public int getCurrentPosition() throws RemoteException {
-            return service.getCurrentPosition();
+            if (service != null)
+                return service.getCurrentPosition();
+            return 0;
         }
 
         @Override
@@ -167,10 +178,53 @@ public class AudioPlayService extends Service {
     /**
      * 根据位置打开对应的音频文件,并且播放
      *
+     * @param
+     */
+    public void openOtherAudio(String path) {
+        this.otherPath = path;
+        if (audioArrayList != null && audioArrayList.size() > 0) {
+
+            audio = audioArrayList.get(position);
+
+            if (mediaPlayer != null) {
+                mediaPlayer.reset();
+            }
+
+            try {
+                mediaPlayer = new MediaPlayer();
+                //设置监听：播放出错，播放完成，准备好
+                mediaPlayer.setOnPreparedListener(new MyOnPreparedListener());
+                mediaPlayer.setOnCompletionListener(new MyOnCompletionListener());
+                mediaPlayer.setOnErrorListener(new MyOnErrorListener());
+                mediaPlayer.setDataSource(path);
+                mediaPlayer.prepareAsync();
+
+                if (playmode == AudioPlayService.REPEAT_SINGLE) {
+                    //单曲循环播放-不会触发播放完成的回调
+                    mediaPlayer.setLooping(true);
+                } else {
+                    //不循环播放
+                    mediaPlayer.setLooping(false);
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        } else {
+            // Toast.makeText(MusicPlayerService.this, "还没有数据", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * 根据位置打开对应的音频文件,并且播放
+     *
      * @param position
      */
     public void openAudio(int position) {
         this.position = position;
+        otherPath = null;
         Log.d(TAG, "openAudio: " + position);
         if (audioArrayList != null && audioArrayList.size() > 0) {
 
@@ -276,7 +330,9 @@ public class AudioPlayService extends Service {
      * @return
      */
     private int getCurrentPosition() {
-        return mediaPlayer.getCurrentPosition();
+        if (mediaPlayer != null)
+            return mediaPlayer.getCurrentPosition();
+        return 0;
     }
 
     /**
@@ -285,7 +341,9 @@ public class AudioPlayService extends Service {
      * @return
      */
     private int getDuration() {
-        return mediaPlayer.getDuration();
+        if (mediaPlayer != null)
+            return mediaPlayer.getDuration();
+        return 0;
     }
 
     /**
@@ -303,7 +361,16 @@ public class AudioPlayService extends Service {
      * @return
      */
     private String getName() {
-        return audio.getName();
+        if (otherPath == null)
+            return audio.getName();
+        else {
+            // /storage/emulated/0/lyric/庐州月.lrc
+            String name = otherPath.split("\\.")[0]; // /storage/emulated/0/lyric/庐州月
+            String[] ns = name.split("/");
+            int size = ns.length;
+            name = ns[size - 1];
+            return name;
+        }
     }
 
     /**

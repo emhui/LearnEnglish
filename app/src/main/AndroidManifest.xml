@@ -22,7 +22,13 @@
             </intent-filter>
         </activity>
         <activity android:name="com.ycxy.ymh.activity.AudioActivity"
-            android:launchMode="singleTask"/>
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="audio/*"/>
+            </intent-filter>
+        </activity>
 
         <service
             android:name="com.ycxy.ymh.service.AudioPlayService"

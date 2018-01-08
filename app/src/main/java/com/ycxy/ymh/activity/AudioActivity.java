@@ -1,12 +1,16 @@
 package com.ycxy.ymh.activity;
 
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -25,7 +29,9 @@ import android.widget.Toast;
 import com.alibaba.fastjson.JSON;
 import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.bean.LyricBean;
+import com.ycxy.ymh.bean.ResultBean;
 import com.ycxy.ymh.learnenglish.IAudioPlayService;
+import com.ycxy.ymh.learnenglish.MainActivity;
 import com.ycxy.ymh.learnenglish.R;
 import com.ycxy.ymh.service.AudioPlayService;
 import com.ycxy.ymh.utils.Constants;
@@ -39,7 +45,14 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.List;
 
 
 import okhttp3.Call;
@@ -53,10 +66,10 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private static final int LYRICLOADSUCCESS = 4;
     private ImageView iv_cd;
     private ImageView iv_handler;
-/*    private Button btn_play;
-    private Button btn_next;
-    private Button btn_pre;
-    private Button btn_mode;  */
+    /*    private Button btn_play;
+        private Button btn_next;
+        private Button btn_pre;
+        private Button btn_mode;  */
     private ImageView btn_play;
     private ImageView btn_next;
     private ImageView btn_pre;
@@ -106,12 +119,12 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     };
     private boolean isPlayCD = false;
     private Audio audio = null;
+    private Uri uri = null;
 
     private void updataUI() {
         try {
             updataBtnPlay();
             lyricView.setCurrentTimeMillis(service.getCurrentPosition());
-            tv_show_name.setText(service.getName().split("\\.")[0]);
             tv_show_Time.setText(utils.stringForTime(service.getCurrentPosition())
                     + "/" + utils.stringForTime(service.getDuration()));
             seekbar.setMax(service.getDuration());
@@ -125,6 +138,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             service = IAudioPlayService.Stub.asInterface(iBinder);
+            getData();
         }
 
         @Override
@@ -146,7 +160,35 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private void initData() {
         EventBus.getDefault().register(this);
         startService();
+
         handler.sendEmptyMessageDelayed(UPDATAUI, 100);
+    }
+
+    private void getData() {
+        uri = getIntent().getData();
+        try {
+//             String songPath = URLDecoder.decode(uri.getPath().toString(), "UTF8");
+            String songPath = getRealPathFromURI(uri);
+            Log.d(TAG, "getData: " + songPath);
+            service.openOtherAudio(songPath);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public String getRealPathFromURI(Uri contentUri) {
+        String res = null;
+        String[] proj = {MediaStore.Audio.Media.DATA};
+        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
+        if (cursor.moveToFirst()) {
+            ;
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
+            res = cursor.getString(column_index);
+        }
+        cursor.close();
+        return res;
     }
 
     private void startService() {
@@ -259,6 +301,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
 
     /**
      * 获取歌词
+     *
      * @throws RemoteException
      */
     private void getLyric() throws RemoteException {
@@ -347,9 +390,10 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void updataCDandLyric(Audio audio){
+    public void updataCDandLyric(Audio audio) {
         startPlayCD();
         try {
+            tv_show_name.setText(new Utils().getAudioName(service.getName()));
             getLyric();
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -453,7 +497,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      */
     private void loadLyricFormNet() {
         try {
-            Log.d(TAG, "loadLyricFormNet: "+Constants.LYRICAPI + utils.getAudioName(service.getName()));
+            Log.d(TAG, "loadLyricFormNet: " + Constants.LYRICAPI + utils.getAudioName(service.getName()));
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -480,21 +524,28 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     }
 
     LyricBean bean;
-
+    int lyricNum = 0;
+    int lyricIndex = 0;
+    List<ResultBean> lyricUrlList ;
     /**
      * 序列化数据
      *
      * @param response
      */
     private void parseJSON(String response) {
+        lyricNum = 0;
+        lyricIndex = 0;
         bean = JSON.parseObject(response, LyricBean.class);
         Log.d(TAG, "parseJSON: " + bean.getCount());
+        lyricNum = bean.getCount();
         // 判断是否有歌词资源
         if (bean.getCount() > 0) {
-            // 开始下载歌词
-            String url = bean.getResult().get(0).getLrc();
+            // 获取歌词的url
+            lyricUrlList = bean.getResult();
+            String url = lyricUrlList.get(lyricIndex).getLrc();
             Log.d(TAG, "parseJSON: " + url);
             loadLyricFormNet(url);
+
         } else {
             handler.sendEmptyMessage(FAILED);
         }
@@ -521,8 +572,13 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                         @Override
                         public void onResponse(File response, int id) {
                             Log.d(TAG, "onResponse: ");
-                            // readFile(response);
-                            handler.sendEmptyMessage(LYRICLOADSUCCESS);
+                            if (isRightLyric(response)) {
+                                handler.sendEmptyMessage(LYRICLOADSUCCESS);
+                            } else {
+                                if (lyricIndex++ <= lyricNum -1) {
+                                    loadLyricFormNet(lyricUrlList.get(lyricIndex).getLrc());
+                                }
+                            }
                         }
                     });
         } catch (RemoteException e) {
@@ -534,5 +590,42 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     protected void onDestroy() {
         super.onDestroy();
         EventBus.getDefault().unregister(this);
+    }
+
+    /**
+     * 检验下载的歌词文件是否正确
+     *
+     * @param response
+     * @return
+     */
+    private boolean isRightLyric(File response) {
+        FileReader reader = null;
+        BufferedReader bufferedReader = null;
+        String txt = "";
+        boolean isRightLyric = false;
+        try {
+            reader = new FileReader(response);
+            bufferedReader = new BufferedReader(reader);
+            String str = "";
+            while ((str = bufferedReader.readLine()) != null) {
+                // 含有 [] 则为正确歌词
+                if (str.contains("[") || str.contains("]")) {
+                    isRightLyric = true;
+                    break;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                reader.close();
+                bufferedReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return isRightLyric;
     }
 }

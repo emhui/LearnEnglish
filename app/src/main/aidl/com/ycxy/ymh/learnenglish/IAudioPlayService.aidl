@@ -10,7 +10,7 @@ interface IAudioPlayService {
      * @param position
      */
      void openAudio(int position);
-
+       void openOtherAudio(String path);
     // 启动
      void start();
     /**

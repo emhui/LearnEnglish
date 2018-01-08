@@ -228,6 +228,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Log.d(TAG, "run:data " + data);
                         String artist = cursor.getString(4);//艺术家
                         mediaItem.setArtist(artist);
+                        Log.d(TAG, "run: artist" + artist);
                     }
                     cursor.close();
                 }

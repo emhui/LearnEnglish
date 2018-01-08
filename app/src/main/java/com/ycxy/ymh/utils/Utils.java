@@ -122,6 +122,12 @@ public class Utils {
         if (str.contains("_")) {
             str = str.split("_")[0];
         }
+        // 琵琶行(成龙)
+        if (str.contains("(") || str.contains(")")) {
+            int pos1 = str.indexOf("(");
+            int pos2 = str.indexOf(")");
+            str = str.substring(0, pos1);
+        }
         return str.trim();
     }
 
