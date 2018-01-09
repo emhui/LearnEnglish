@@ -10,6 +10,10 @@ import java.io.File;
 
 public class Constants {
     /**
+     * 先前播放位置
+     */
+    public static final String PREPOSITION = "PREPOSITION";
+    /**
      * 本地文件存储目录
      */
     public static String STROAGEPATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "lyric";

@@ -35,6 +35,7 @@ import com.ycxy.ymh.activity.AudioActivity;
 import com.ycxy.ymh.adapter.AudioAdapter;
 import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.service.AudioPlayService;
+import com.ycxy.ymh.utils.Utils;
 import com.ycxy.ymh.view.MyDecoration;
 
 import java.util.ArrayList;
@@ -148,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         isPermission();
         getDataFromLocal();
         startService();
+        position = new Utils().getPosfStor(this);
         handler.sendEmptyMessageDelayed(SHOWAUDIONAME, 100);
     }
 

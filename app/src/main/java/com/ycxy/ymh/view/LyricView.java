@@ -115,8 +115,10 @@ public class LyricView extends View {
     private Rect mTimerRect;
     private String mDefaultTime = "00:00";
 
-    private int mLineColor = Color.parseColor("#EFEFEF");
-    private int mBtnColor = Color.parseColor("#EFEFEF");
+    //    private int mLineColor = Color.parseColor("#EFEFEF");
+    private int mLineColor = Color.parseColor("#aa08ce70");
+    //    private int mBtnColor = Color.parseColor("#EFEFEF");
+    private int mBtnColor = Color.parseColor("#aa08ce70");
 
     private List<Integer> mLineFeedRecord = new ArrayList<>();
     private boolean mEnableLineFeed = false;
@@ -152,6 +154,10 @@ public class LyricView extends View {
         return super.dispatchTouchEvent(event);
     }
 
+    private double startY;
+    private double endY;
+    private double distanceY;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         detector.onTouchEvent(event);
@@ -164,12 +170,15 @@ public class LyricView extends View {
                 actionCancel(event);
                 break;
             case MotionEvent.ACTION_DOWN:
+                startY = event.getY();
                 actionDown(event);
                 break;
             case MotionEvent.ACTION_MOVE:
                 actionMove(event);
                 break;
             case MotionEvent.ACTION_UP:
+                endY = event.getY();
+                distanceY = Math.abs(endY - startY);
                 actionUp(event);
                 break;
             default:
@@ -423,8 +432,10 @@ public class LyricView extends View {
                 if (mLineNumberUnderIndicator != mCurrentPlayLine) {
                     mShowIndicator = false;
                     if (mClickListener != null) {
-                        setUserTouch(false);
-                        mClickListener.onPlayerClicked(mLyricInfo.songLines.get(mLineNumberUnderIndicator).start, mLyricInfo.songLines.get(mLineNumberUnderIndicator).content);
+                        //if (distanceY > 100) {
+                            setUserTouch(false);
+                            mClickListener.onPlayerClicked(mLyricInfo.songLines.get(mLineNumberUnderIndicator).start, mLyricInfo.songLines.get(mLineNumberUnderIndicator).content);
+                        //}
                     }
                 }
             }
@@ -590,10 +601,10 @@ public class LyricView extends View {
         mTimerPaint = new Paint();
         mTimerPaint.setDither(true);
         mTimerPaint.setAntiAlias(true);
-        mTimerPaint.setColor(Color.WHITE);
+//        mTimerPaint.setColor(Color.WHITE);
+        mTimerPaint.setColor(Color.BLACK);
         mTimerPaint.setTextAlign(Paint.Align.RIGHT);
         mTimerPaint.setTextSize(getRawSize(TypedValue.COMPLEX_UNIT_SP, INDICATOR_TIME_TEXT_SIZE));
-
 
     }
 
@@ -723,11 +734,11 @@ public class LyricView extends View {
                 Collections.sort(lyricInfo.songLines, new Comparator<LineInfo>() {
                     @Override
                     public int compare(LineInfo lhs, LineInfo rhs) {
-                        if(lhs.start < rhs.start){
-                            return  -1;
-                        }else if(lhs.start > rhs.start){
-                            return  1;
-                        }else{
+                        if (lhs.start < rhs.start) {
+                            return -1;
+                        } else if (lhs.start > rhs.start) {
+                            return 1;
+                        } else {
                             return 0;
                         }
 
@@ -774,7 +785,7 @@ public class LyricView extends View {
             return;
         }
         if (index >= 9 && line.trim().length() > index + 1) {
-            parsedLyric(lyricInfo,line);
+            parsedLyric(lyricInfo, line);
         }
     }
 
@@ -861,7 +872,7 @@ public class LyricView extends View {
         void onPlayerClicked(long progress, String content);
     }
 
-    public interface OnPlayerSingleClickListener{
+    public interface OnPlayerSingleClickListener {
         void onPlayerSingleClicked();
     }
 
@@ -869,7 +880,7 @@ public class LyricView extends View {
      * 解析一句歌词
      *
      * @param lyricInfo
-     * @param line [02:04.12][03:37.32][00:59.73]我在这里欢笑
+     * @param line      [02:04.12][03:37.32][00:59.73]我在这里欢笑
      * @return
      */
     private String parsedLyric(LyricInfo lyricInfo, String line) {
@@ -878,27 +889,27 @@ public class LyricView extends View {
 
         int pos2 = line.indexOf("]");//9,如果没有返回-1
 
-        if(pos1 ==0 && pos2 != -1){//肯定是由一句歌词
+        if (pos1 == 0 && pos2 != -1) {//肯定是由一句歌词
 
             //装时间
             long[] times = new long[getCountTag(line)];
 
-            String strTime =line.substring(pos1+1,pos2) ;//02:04.12
+            String strTime = line.substring(pos1 + 1, pos2);//02:04.12
             times[0] = strTime2LongTime(strTime);
 
             String content = line;
             int i = 1;
-            while (pos1 ==0 && pos2 != -1){
+            while (pos1 == 0 && pos2 != -1) {
                 content = content.substring(pos2 + 1); //[03:37.32][00:59.73]我在这里欢笑--->[00:59.73]我在这里欢笑-->我在这里欢笑
                 pos1 = content.indexOf("[");//0/-1
                 pos2 = content.indexOf("]");//9//-1
 
-                if(pos2 != -1 ){
+                if (pos2 != -1) {
                     strTime = content.substring(pos1 + 1, pos2);//03:37.32-->00:59.73
                     times[i] = strTime2LongTime(strTime);
 
-                    if(times[i] == -1){
-                        return  "";
+                    if (times[i] == -1) {
+                        return "";
                     }
 
                     i++;
@@ -908,9 +919,9 @@ public class LyricView extends View {
 
             LineInfo lineInfo = new LineInfo();
             //把时间数组和文本关联起来，并且加入到集合中
-            for(int j = 0;j < times.length;j++){
+            for (int j = 0; j < times.length; j++) {
 
-                if(times[j] !=0){//有时间戳
+                if (times[j] != 0) {//有时间戳
                     lineInfo.content = content;
                     lineInfo.start = times[j];
                     //添加到集合中
@@ -918,7 +929,7 @@ public class LyricView extends View {
                     lineInfo = new LineInfo();
                 }
             }
-            return  content;//我在这里欢笑
+            return content;//我在这里欢笑
 
         }
 
@@ -928,19 +939,20 @@ public class LyricView extends View {
 
     /**
      * 判断有多少句歌词
+     *
      * @param line [02:04.12][03:37.32][00:59.73]我在这里欢笑
      * @return
      */
     private int getCountTag(String line) {
         int result = -1;
-        String [] left = line.split("\\[");
-        String [] right = line.split("\\]");
+        String[] left = line.split("\\[");
+        String[] right = line.split("\\]");
 
-        if(left.length==0 && right.length ==0){
+        if (left.length == 0 && right.length == 0) {
             result = 1;
-        }else if(left.length > right.length){
+        } else if (left.length > right.length) {
             result = left.length;
-        }else{
+        } else {
             result = right.length;
         }
         return result;
@@ -948,12 +960,13 @@ public class LyricView extends View {
 
     /**
      * 把String类型是时间转换成long类型
+     *
      * @param strTime 02:04.12
      * @return
      */
     private long strTime2LongTime(String strTime) {
         long result = -1;
-        try{
+        try {
 
             //1.把02:04.12按照:切割成02和04.12
             String[] s1 = strTime.split(":");
@@ -969,8 +982,8 @@ public class LyricView extends View {
             //3.毫秒
             long mil = Long.parseLong(s2[1]);
 
-            result =  min * 60 * 1000 + second * 1000 + mil*10;
-        }catch (Exception e){
+            result = min * 60 * 1000 + second * 1000 + mil * 10;
+        } catch (Exception e) {
             e.printStackTrace();
             result = -1;
         }
@@ -979,9 +992,10 @@ public class LyricView extends View {
     }
 
     // 添加手势识别器
-    GestureDetector detector = new GestureDetector(getContext(),new GestureDetector.SimpleOnGestureListener() {
+    GestureDetector detector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
+
             // 调用回调函数
             if (!mFling) {
                 mSingleClickListener.onPlayerSingleClicked();

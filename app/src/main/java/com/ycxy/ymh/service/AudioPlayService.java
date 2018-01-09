@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.media.MediaPlayer;
@@ -15,6 +16,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -23,6 +25,7 @@ import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.learnenglish.IAudioPlayService;
 import com.ycxy.ymh.learnenglish.MainActivity;
 import com.ycxy.ymh.learnenglish.R;
+import com.ycxy.ymh.utils.Utils;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -526,12 +529,15 @@ public class AudioPlayService extends Service {
         }.start();
     }
 
-    NotificationManager manager = null;
+    NotificationManager mNotificationManager = null;
 
     public void setNotify() {
+
         // Andriod O 可能有问题
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         } else {
+            mNotify();
+/*
             manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             // 获取意图
             Intent intent = new Intent(this, AudioActivity.class);
@@ -547,14 +553,53 @@ public class AudioPlayService extends Service {
                     .build();
 
             manager.notify(1, notification);
+*/
         }
     }
 
-    public void cancelNotify() {
-        if (manager != null) {
-            manager.cancel(1);
-            manager = null;
-        }
+    private void mNotify() {
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.mipmap.music)
+                        .setContentTitle("LE Music")
+                        .setContentText(getName());
+// Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(this, AudioActivity.class);
 
+// The stack builder object will contain an artificial back stack for the
+// started Activity.
+// This ensures that navigating backward from the Activity leads out of
+// your application to the Home screen.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+// Adds the back stack for the Intent (but not the Intent itself)
+        stackBuilder.addParentStack(AudioActivity.class);
+// Adds the Intent that starts the Activity to the top of the stack
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+        mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+// mId allows you to update the notification later on.
+        mNotificationManager.notify(1, mBuilder.build());
+    }
+
+    public void cancelNotify() {
+        if (mNotificationManager != null) {
+            mNotificationManager.cancel(1);
+            mNotificationManager = null;
+        }
+    }
+
+    /**
+     * 保存数据到本地
+     */
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy: ----------------------++++++++++++++++");
+        super.onDestroy();
     }
 }

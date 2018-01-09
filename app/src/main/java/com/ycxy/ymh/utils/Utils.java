@@ -1,6 +1,7 @@
 package com.ycxy.ymh.utils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.TrafficStats;
 
 import java.io.File;
@@ -131,7 +132,31 @@ public class Utils {
         return str.trim();
     }
 
+    /**
+     * 获取歌词的路径
+     * @param audioName
+     * @return
+     */
     public String nameToPath(String audioName){
         return Constants.STROAGEPATH + File.separator + audioName + ".lrc";
+    }
+
+    /**
+     * 保存数据到内存中
+     */
+    public void savePos2Stor(Context mContext, int pos){
+        SharedPreferences sp = mContext.getSharedPreferences(Constants.PREPOSITION, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putInt(Constants.PREPOSITION, pos);
+        editor.apply();
+    }
+
+    /**
+     * 获取上一次播放音乐的位置
+     * @return
+     */
+    public int getPosfStor(Context mContext){
+        SharedPreferences sp = mContext.getSharedPreferences(Constants.PREPOSITION, Context.MODE_PRIVATE);
+        return sp.getInt(Constants.PREPOSITION,0);
     }
 }
