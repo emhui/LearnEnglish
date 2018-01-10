@@ -2,6 +2,7 @@ package com.ycxy.ymh.learnenglish;
 
 import android.Manifest;
 import android.app.Activity;
+import android.bluetooth.BluetoothHeadset;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -165,6 +166,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // 注册广播
         filter = new IntentFilter();
         filter.addAction("android.intent.action.HEADSET_PLUG");
+        filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         receiver = new MusicBoradcastReceiver();
         registerReceiver(receiver, filter);
 

@@ -1,5 +1,8 @@
 package com.ycxy.ymh.receiver;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothHeadset;
+import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -13,7 +16,14 @@ public class MusicBoradcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        if ("android.intent.action.HEADSET_PLUG".equals(action)) {
+        if (BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED.equals(action)) {
+            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+            if (BluetoothProfile.STATE_DISCONNECTED == adapter.getProfileConnectionState(BluetoothProfile.HEADSET)) {
+                //Bluetooth headset is now disconnected
+                // handleHeadsetDisconnected();
+                onHEADSET_plugoutListener.setOnHEADSET_PLUGOUTListener();
+            }
+        } else if ("android.intent.action.HEADSET_PLUG".equals(action)) {
             if (intent.hasExtra("state")) {
                 int state = intent.getIntExtra("state", 0);
                 if (state == 1) {
@@ -31,11 +41,11 @@ public class MusicBoradcastReceiver extends BroadcastReceiver {
      */
     private OnHEADSET_PLUGINListener onHEADSET_pluginListener;
 
-    public void setOnHEADSET_PLUGINListener(OnHEADSET_PLUGINListener onHEADSET_pluginListener){
+    public void setOnHEADSET_PLUGINListener(OnHEADSET_PLUGINListener onHEADSET_pluginListener) {
         this.onHEADSET_pluginListener = onHEADSET_pluginListener;
     }
 
-    public interface OnHEADSET_PLUGINListener{
+    public interface OnHEADSET_PLUGINListener {
         void setOnHEADSET_PLUGINListener();
     }
 
@@ -44,11 +54,11 @@ public class MusicBoradcastReceiver extends BroadcastReceiver {
      */
     private OnHEADSET_PLUGOUTListener onHEADSET_plugoutListener;
 
-    public void setOnHEADSET_PLUGOUTListener(OnHEADSET_PLUGOUTListener onHEADSET_plugoutListener){
+    public void setOnHEADSET_PLUGOUTListener(OnHEADSET_PLUGOUTListener onHEADSET_plugoutListener) {
         this.onHEADSET_plugoutListener = onHEADSET_plugoutListener;
     }
 
-    public interface OnHEADSET_PLUGOUTListener{
+    public interface OnHEADSET_PLUGOUTListener {
         void setOnHEADSET_PLUGOUTListener();
     }
 }
