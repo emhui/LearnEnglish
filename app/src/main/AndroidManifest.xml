@@ -35,6 +35,13 @@
             android:name="com.ycxy.ymh.service.AudioPlayService"
             android:enabled="true"
             android:exported="true"></service>
+
+        <receiver android:name="com.ycxy.ymh.receiver.MusicBoradcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.HEADSET_PLUG"/>
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

@@ -25,6 +25,7 @@ import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.learnenglish.IAudioPlayService;
 import com.ycxy.ymh.learnenglish.MainActivity;
 import com.ycxy.ymh.learnenglish.R;
+import com.ycxy.ymh.utils.Constants;
 import com.ycxy.ymh.utils.Utils;
 
 import org.greenrobot.eventbus.EventBus;
@@ -308,6 +309,7 @@ public class AudioPlayService extends Service {
 
     // 启动
     public void start() {
+        EventBus.getDefault().post(new Constants());
         mediaPlayer.start();
         setNotify();
     }
@@ -316,6 +318,7 @@ public class AudioPlayService extends Service {
      * 播暂停音乐
      */
     private void pause() {
+        EventBus.getDefault().post(new Utils());
         mediaPlayer.pause();
     }
 

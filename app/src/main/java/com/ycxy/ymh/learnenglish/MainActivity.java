@@ -2,9 +2,12 @@ package com.ycxy.ymh.learnenglish;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -34,6 +37,7 @@ import android.widget.TextView;
 import com.ycxy.ymh.activity.AudioActivity;
 import com.ycxy.ymh.adapter.AudioAdapter;
 import com.ycxy.ymh.bean.Audio;
+import com.ycxy.ymh.receiver.MusicBoradcastReceiver;
 import com.ycxy.ymh.service.AudioPlayService;
 import com.ycxy.ymh.utils.Utils;
 import com.ycxy.ymh.view.MyDecoration;
@@ -70,6 +74,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    private android.content.IntentFilter filter;
+
     private void updataUI() {
         if (iService != null) {
             try {
@@ -103,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             iService = IAudioPlayService.Stub.asInterface(iBinder);
+            startBroadcast();
         }
 
         @Override
@@ -151,6 +158,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startService();
         position = new Utils().getPosfStor(this);
         handler.sendEmptyMessageDelayed(SHOWAUDIONAME, 100);
+
+    }
+
+    private void startBroadcast() {
+        // 注册广播
+        filter = new IntentFilter();
+        filter.addAction("android.intent.action.HEADSET_PLUG");
+        receiver = new MusicBoradcastReceiver();
+        registerReceiver(receiver, filter);
+
+        receiver.setOnHEADSET_PLUGINListener(new MusicBoradcastReceiver.OnHEADSET_PLUGINListener() {
+            @Override
+            public void setOnHEADSET_PLUGINListener() {
+                try {
+                    start();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        receiver.setOnHEADSET_PLUGOUTListener(new MusicBoradcastReceiver.OnHEADSET_PLUGOUTListener() {
+            @Override
+            public void setOnHEADSET_PLUGOUTListener() {
+                try {
+                    pause();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     private void startService() {
@@ -276,11 +314,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
 
                     if (iService.isPlaying()) {
-                        btn_audio_play.setBackgroundResource(R.mipmap.play);
-                        iService.pause();
+                        pause();
                     } else {
-                        btn_audio_play.setBackgroundResource(R.mipmap.pause);
-                        iService.start();
+                        start();
                     }
                     isPlaying = !isPlaying;
                 } catch (RemoteException e) {
@@ -296,6 +332,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
 
+        }
+    }
+
+    private void start() throws RemoteException {
+        if (!iService.isNull()) {
+            btn_audio_play.setBackgroundResource(R.mipmap.pause);
+            iService.start();
+        }
+    }
+
+    private void pause() throws RemoteException {
+        if (!iService.isNull()) {
+            btn_audio_play.setBackgroundResource(R.mipmap.play);
+            iService.pause();
         }
     }
 
@@ -411,4 +461,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(receiver);
+    }
+
+    public MusicBoradcastReceiver receiver;
+
+/*    public class MusicBoradcastReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if ("android.intent.action.HEADSET_PLUG".equals(action)) {
+                if (intent.hasExtra("state")) {
+                    int state = intent.getIntExtra("state", 0);
+                    if (state == 1) {
+                        try {
+                            start();
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (state == 0) {
+                        try {
+                            pause();
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+    }*/
 }

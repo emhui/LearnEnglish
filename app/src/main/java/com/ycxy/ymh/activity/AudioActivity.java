@@ -465,16 +465,23 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      */
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void updataCDandLyric(Audio audio) {
-        startPlayCD();
         try {
             tv_show_name.setText(new Utils().getAudioName(service.getName()));
-            Log.d(TAG, "updataCDandLyric: ----------> " + new Utils().getAudioName(service.getName()));
             getLyric();
         } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void startCDMsg(Constants constants){
+        startPlayCD();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void stopCDMsg(Utils utils){
+        stopPlayCD();
+    }
     /**
      * 设置播放按键样式为pause
      */
@@ -489,6 +496,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         iv_cd.clearAnimation();
         iv_handler.clearAnimation();
     }
+
 
 
     public void startPlayCD() {
@@ -518,7 +526,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      */
     private void updataBtnPlay() throws RemoteException {
         if (!service.isPlaying()) {
-            stopPlayCD();
+
             setBtnPlay();
         } else {
             setBtnPause();
