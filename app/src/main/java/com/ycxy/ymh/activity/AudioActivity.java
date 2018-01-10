@@ -36,6 +36,7 @@ import com.ycxy.ymh.learnenglish.MainActivity;
 import com.ycxy.ymh.learnenglish.R;
 import com.ycxy.ymh.service.AudioPlayService;
 import com.ycxy.ymh.utils.Constants;
+import com.ycxy.ymh.utils.HeadSetUtil;
 import com.ycxy.ymh.utils.Utils;
 import com.ycxy.ymh.view.LyricView;
 import com.ycxy.ymh.view.MyRelativeLayout;
@@ -152,6 +153,8 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             service = IAudioPlayService.Stub.asInterface(iBinder);
             getData();
+            HeadSetUtil.getInstance().setOnHeadSetListener(headSetListener);
+            HeadSetUtil.getInstance().open(AudioActivity.this);
             try {
                 tv_show_name.setText(new Utils().getAudioName(service.getName()));
             } catch (RemoteException e) {
@@ -162,6 +165,21 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
 
+        }
+    };
+
+    HeadSetUtil.OnHeadSetListener headSetListener = new HeadSetUtil.OnHeadSetListener() {
+        @Override
+        public void onDoubleClick() {
+            next();
+        }
+        @Override
+        public void onClick() {
+            play_method();
+        }
+        @Override
+        public void onThreeClick() {
+            pre();
         }
     };
 
@@ -178,7 +196,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private void initData() {
         EventBus.getDefault().register(this);
         startService();
-
         handler.sendEmptyMessageDelayed(UPDATAUI, 100);
     }
 
@@ -656,6 +673,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         Log.d(TAG, "onDestroy: -----------------+++++++++++++++++++-============");
         new Utils().savePos2Stor(this, position);
         EventBus.getDefault().unregister(this);
+        HeadSetUtil.getInstance().close(this);
     }
 
     /**
