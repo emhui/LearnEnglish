@@ -196,13 +196,13 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private void initData() {
         EventBus.getDefault().register(this);
         startService();
+        position = new Utils().getPosfStor(this);
         handler.sendEmptyMessageDelayed(UPDATAUI, 100);
     }
 
     private void getData() {
         uri = getIntent().getData();
         try {
-//             String songPath = URLDecoder.decode(uri.getPath().toString(), "UTF8");
             String songPath = getRealPathFromURI(uri);
             Log.d(TAG, "getData: " + songPath);
             service.openOtherAudio(songPath);
@@ -326,6 +326,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                 isPlaying = !isPlaying;
                 break;
             case R.id.btn_audio_type:
+                setPlaymode();
                 break;
             case R.id.btn_audio_pre:
                 pre();
@@ -340,6 +341,41 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         }
     }
 
+    private void showPlaymode() {
+        try {
+            int mode = service.getPlayMode();
+            if (mode == AudioPlayService.REPEAT_ALL) {
+                btn_mode.setBackgroundResource(R.drawable.btn_all_repeat_selector);
+            } else if (mode == AudioPlayService.REPEAT_SINGLE) {
+                btn_mode.setBackgroundResource(R.drawable.btn_one_repeat_selector);
+            } else if (mode == AudioPlayService.REPEAT_RANDOM) {
+                btn_mode.setBackgroundResource(R.drawable.btn_shuffle_selector);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setPlaymode() {
+        try {
+            int playmode = service.getPlayMode();
+            if(playmode==AudioPlayService.REPEAT_ALL){
+                playmode = AudioPlayService.REPEAT_SINGLE;
+            }else if(playmode == AudioPlayService.REPEAT_SINGLE){
+                playmode = AudioPlayService.REPEAT_RANDOM;
+            }else if(playmode ==AudioPlayService.REPEAT_RANDOM){
+                playmode = AudioPlayService.REPEAT_ALL;
+            }
+            //保持
+            service.setPlayMode(playmode);
+
+            //设置图片
+            showPlaymode();
+
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
     private void pre() {
         try {
             service.pre();
@@ -483,6 +519,16 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void updataCDandLyric(Audio audio) {
         try {
+            int playmode = service.getPlayMode();
+
+            if(playmode==AudioPlayService.REPEAT_ALL){
+                btn_mode.setBackgroundResource(R.drawable.btn_all_repeat_selector);
+            }else if(playmode == AudioPlayService.REPEAT_SINGLE){
+                btn_mode.setBackgroundResource(R.drawable.btn_one_repeat_selector);
+            }else if(playmode ==AudioPlayService.REPEAT_ALL){
+                btn_mode.setBackgroundResource(R.drawable.btn_shuffle_selector);
+            }
+
             tv_show_name.setText(new Utils().getAudioName(service.getName()));
             getLyric();
         } catch (RemoteException e) {
@@ -671,7 +717,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy: -----------------+++++++++++++++++++-============");
-        new Utils().savePos2Stor(this, position);
         EventBus.getDefault().unregister(this);
         HeadSetUtil.getInstance().close(this);
     }

@@ -18,12 +18,12 @@
         android:textColor="#ffffff"
         android:textSize="18dp" />
 
-   <com.ycxy.ymh.view.LyricView
-        android:clickable="true"
+    <com.ycxy.ymh.view.LyricView
         android:id="@+id/lyric"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
+        android:clickable="true"
         android:visibility="gone"
         app:highlightColor="#08ce70"
         app:hint="抱歉，未找到歌词!"
@@ -31,11 +31,11 @@
         app:textColor="#000000" />
 
     <com.ycxy.ymh.view.MyRelativeLayout
-        android:clickable="true"
         android:id="@+id/rr_cd"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:clickable="true"
         android:visibility="visible">
 
         <RelativeLayout
@@ -70,9 +70,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:layout_marginBottom="6dp"
-            >
+            android:orientation="horizontal">
 
             <SeekBar
                 android:id="@+id/seekbar"
@@ -100,7 +99,7 @@
                 android:layout_height="@dimen/play_mode_width_height"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="@dimen/play_mode_margin_left"
-                android:src="@drawable/btn_all_repeat_selector" />
+                android:background="@drawable/btn_all_repeat_selector" />
 
             <ImageView
                 android:id="@+id/btn_audio_pre"
@@ -117,9 +116,8 @@
                 android:layout_width="@dimen/play_btn_width_height"
                 android:layout_height="@dimen/play_btn_width_height"
                 android:layout_centerHorizontal="true"
-                android:scaleType="centerInside"
                 android:background="@drawable/btn_pause_selector"
-                />
+                android:scaleType="centerInside" />
 
             <ImageView
                 android:id="@+id/btn_audio_next"

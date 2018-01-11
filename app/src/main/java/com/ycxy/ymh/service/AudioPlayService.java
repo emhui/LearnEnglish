@@ -82,6 +82,8 @@ public class AudioPlayService extends Service {
     private void initData() {
         mAudioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         mFocusChangeListener = new MyAudioFocusChangeListener();
+        playmode = new Utils().getPlaymode(this, "playmode");
+        position = new Utils().getPosfStor(this);
         getDataFromLocal();
     }
 
@@ -323,6 +325,8 @@ public class AudioPlayService extends Service {
                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             EventBus.getDefault().post(new Constants());
+            // 每次播放都将地址保存到本地，防止被杀死
+            new Utils().savePos2Stor(this, position);
             mediaPlayer.start();
             setNotify();
         }
@@ -475,11 +479,18 @@ public class AudioPlayService extends Service {
      * 设置下一曲的位置
      */
     private void playNextPosition() {
-
-        position++;
-        if (position > audioArrayList.size() - 1) {
-            position = 0;
+        int mode = getPlayMode();
+        if (mode == AudioPlayService.REPEAT_ALL) {
+            position++;
+            if (position > audioArrayList.size() - 1) {
+                position = 0;
+            }
+        } else if (mode == AudioPlayService.REPEAT_SINGLE) {
+            // openAudio(position);
+        } else if (mode == AudioPlayService.REPEAT_RANDOM) {
+            position = new Random().nextInt(audioArrayList.size() - 1);
         }
+
         openAudio(position);
     }
 
@@ -494,11 +505,19 @@ public class AudioPlayService extends Service {
      * 找到上一个音频的位置，并且播放
      */
     private void playPrePosition() {
-        int playmode = getPlayMode();
-        position--;
-        if (position < 0) {
-            position = audioArrayList.size() - 1;
+        int mode = getPlayMode();
+
+        if (mode == AudioPlayService.REPEAT_ALL) {
+            position--;
+            if (position < 0) {
+                position = audioArrayList.size() - 1;
+            }
+        } else if (mode == AudioPlayService.REPEAT_SINGLE) {
+            // openAudio(position);
+        } else if (mode == AudioPlayService.REPEAT_RANDOM) {
+            position = new Random().nextInt(audioArrayList.size() - 1);
         }
+
         openAudio(position);
     }
 
@@ -509,7 +528,8 @@ public class AudioPlayService extends Service {
      */
     private void setPlayMode(int playmode) {
         this.playmode = playmode;
-        //CacheUtils.putPlaymode(this,"playmode",playmode);
+        // 保存缓存到
+        new Utils().putPlaymode(this, "playmode", playmode);
 
         if (playmode == AudioPlayService.REPEAT_SINGLE) {
             //单曲循环播放-不会触发播放完成的回调
@@ -526,7 +546,7 @@ public class AudioPlayService extends Service {
      * @return
      */
     private int getPlayMode() {
-        return AudioPlayService.REPEAT_ALL;
+        return playmode;
     }
 
 

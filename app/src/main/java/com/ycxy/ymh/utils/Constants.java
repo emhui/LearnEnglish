@@ -12,7 +12,8 @@ public class Constants {
     /**
      * 先前播放位置
      */
-    public static final String PREPOSITION = "PREPOSITION";
+    public static final String PREPOSITION = "preposition";
+    public static final String MODE = "mode";
     /**
      * 本地文件存储目录
      */
