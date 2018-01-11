@@ -576,7 +576,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     @Override
     protected void onResume() {
         super.onResume();
-        startPlayCD();
+        // startPlayCD();
     }
 
     /**

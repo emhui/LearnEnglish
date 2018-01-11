@@ -9,6 +9,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -69,6 +70,9 @@ public class AudioPlayService extends Service {
      */
     private String otherPath = null;
 
+    private AudioManager mAudioManager;
+
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -76,6 +80,8 @@ public class AudioPlayService extends Service {
     }
 
     private void initData() {
+        mAudioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+        mFocusChangeListener = new MyAudioFocusChangeListener();
         getDataFromLocal();
     }
 
@@ -239,13 +245,7 @@ public class AudioPlayService extends Service {
             }
 
             try {
-                mediaPlayer = new MediaPlayer();
-                //设置监听：播放出错，播放完成，准备好
-                mediaPlayer.setOnPreparedListener(new MyOnPreparedListener());
-                mediaPlayer.setOnCompletionListener(new MyOnCompletionListener());
-                mediaPlayer.setOnErrorListener(new MyOnErrorListener());
-                mediaPlayer.setDataSource(audio.getData());
-                mediaPlayer.prepareAsync();
+                initPlayer();
 
                 if (playmode == AudioPlayService.REPEAT_SINGLE) {
                     //单曲循环播放-不会触发播放完成的回调
@@ -263,6 +263,16 @@ public class AudioPlayService extends Service {
         } else {
             // Toast.makeText(MusicPlayerService.this, "还没有数据", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void initPlayer() throws IOException {
+        mediaPlayer = new MediaPlayer();
+        //设置监听：播放出错，播放完成，准备好
+        mediaPlayer.setOnPreparedListener(new MyOnPreparedListener());
+        mediaPlayer.setOnCompletionListener(new MyOnCompletionListener());
+        mediaPlayer.setOnErrorListener(new MyOnErrorListener());
+        mediaPlayer.setDataSource(audio.getData());
+        mediaPlayer.prepareAsync();
     }
 
     /**
@@ -309,9 +319,75 @@ public class AudioPlayService extends Service {
 
     // 启动
     public void start() {
-        EventBus.getDefault().post(new Constants());
-        mediaPlayer.start();
-        setNotify();
+        int result = mAudioManager.requestAudioFocus(mFocusChangeListener, AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            EventBus.getDefault().post(new Constants());
+            mediaPlayer.start();
+            setNotify();
+        }
+    }
+
+    private MyAudioFocusChangeListener mFocusChangeListener;
+
+    class MyAudioFocusChangeListener implements AudioManager.OnAudioFocusChangeListener {
+
+        private int mPreviousState;
+
+        private boolean mShouldStart = true;
+
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+            handlerAudioFocus(focusChange);
+            mPreviousState = focusChange;
+        }
+
+        private void handlerAudioFocus(int focusChange) {
+            switch (focusChange) {
+                case AudioManager.AUDIOFOCUS_GAIN:
+                    handlerAudioFocusGain();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS:
+                    if (mediaPlayer != null) {
+/*                        mediaPlayer.release();
+                        mediaPlayer = null;*/
+                        mediaPlayer.pause();
+                    }
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                    mediaPlayer.pause();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+//                    mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mOriginalVol / 2,
+//                            AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
+                    // mediaPlayer.setVolume(0.5f, 0.5f);
+                    break;
+            }
+        }
+
+        private void handlerAudioFocusGain() {
+            switch (mPreviousState) {
+                case AudioManager.AUDIOFOCUS_LOSS:
+/*                    try {
+                        initPlayer();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }*/
+                    mShouldStart = false;
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                    if (mediaPlayer != null) {
+                        if (mShouldStart) {
+                            mediaPlayer.start();
+                        } else {
+                            mShouldStart = true;
+                        }
+                    }
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                    //mediaPlayer.setVolume(1, 1);
+                    break;
+                default:
+            }
+        }
     }
 
     /**

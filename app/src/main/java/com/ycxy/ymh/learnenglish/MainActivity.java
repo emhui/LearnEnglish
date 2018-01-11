@@ -170,6 +170,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         receiver = new MusicBoradcastReceiver();
         registerReceiver(receiver, filter);
 
+        // 耳机插入的监听事件
         receiver.setOnHEADSET_PLUGINListener(new MusicBoradcastReceiver.OnHEADSET_PLUGINListener() {
             @Override
             public void setOnHEADSET_PLUGINListener() {
@@ -180,7 +181,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         });
-
+        // 耳机或蓝牙耳机断开的监听
         receiver.setOnHEADSET_PLUGOUTListener(new MusicBoradcastReceiver.OnHEADSET_PLUGOUTListener() {
             @Override
             public void setOnHEADSET_PLUGOUTListener() {
@@ -279,7 +280,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         }.start();
-
     }
 
     /**
@@ -314,7 +314,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (iService.isNull()) {
                         openAudio();
                     }
-
                     if (iService.isPlaying()) {
                         pause();
                     } else {
@@ -471,31 +470,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public MusicBoradcastReceiver receiver;
-
-/*    public class MusicBoradcastReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if ("android.intent.action.HEADSET_PLUG".equals(action)) {
-                if (intent.hasExtra("state")) {
-                    int state = intent.getIntExtra("state", 0);
-                    if (state == 1) {
-                        try {
-                            start();
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (state == 0) {
-                        try {
-                            pause();
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }
-    }*/
 }
