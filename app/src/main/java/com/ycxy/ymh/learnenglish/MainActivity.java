@@ -42,6 +42,7 @@ import com.ycxy.ymh.receiver.MusicBoradcastReceiver;
 import com.ycxy.ymh.service.AudioPlayService;
 import com.ycxy.ymh.utils.Utils;
 import com.ycxy.ymh.view.MyDecoration;
+import com.ycxy.ymh.view.MyTextView;
 
 import java.util.ArrayList;
 
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RecyclerView recyclerView;
     private Button btn_audio_play;
     private Button btn_audio_next;
-    private TextView tv_audio_msg;
+    private MyTextView tv_audio_msg;
 
     private boolean isPlaying = false;
 
@@ -221,9 +222,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-        ll_audio_msg.setOnClickListener(this);
+        // ll_audio_msg.setOnClickListener(this);
         btn_audio_play.setOnClickListener(this);
         btn_audio_next.setOnClickListener(this);
+
+        tv_audio_msg.setOnClickedListener(new MyTextView.OnClickedListener() {
+            @Override
+            public void setOnClickedListener() {
+                startPlayView();
+            }
+        });
+
+        tv_audio_msg.setOnSwipeListener(new MyTextView.OnSwipeListener() {
+            @Override
+            public void setOnSwipeNextListener() {
+                next();
+            }
+
+            @Override
+            public void setOnSwipePreListener() {
+                pre();
+            }
+        });
     }
 
 
@@ -304,11 +324,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()) {
+        switch (view.getId()) {/*
             case R.id.ll_audio_msg:
-                Intent intent = new Intent(MainActivity.this, AudioActivity.class);
-                startActivity(intent);
-                break;
+                startPlayView();
+                break;*/
             case R.id.btn_audio_play:
                 try {
                     if (iService.isNull()) {
@@ -326,14 +345,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
             case R.id.btn_audio_next:
-                try {
-                    iService.next();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
+                next();
                 break;
 
         }
+    }
+
+    private void pre() {
+        try {
+            iService.pre();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void next() {
+        try {
+            iService.next();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void startPlayView() {
+        Intent intent = new Intent(MainActivity.this, AudioActivity.class);
+        startActivity(intent);
     }
 
     private void start() throws RemoteException {

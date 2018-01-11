@@ -47,7 +47,6 @@ public class MyRelativeLayout extends RelativeLayout {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         detector.onTouchEvent(event);
-        Log.d(TAG, "onTouchEvent: ");
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 startX = event.getX();
@@ -87,36 +86,11 @@ public class MyRelativeLayout extends RelativeLayout {
         void setOnClickListener();
     }
 
-    GestureDetector detector = new GestureDetector(getContext(), new GestureDetector.OnGestureListener() {
+    GestureDetector detector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener(){
         @Override
-        public boolean onDown(MotionEvent e) {
-            return false;
-        }
-
-        @Override
-        public void onShowPress(MotionEvent e) {
-
-        }
-
-        @Override
-        public boolean onSingleTapUp(MotionEvent e) {
+        public boolean onSingleTapConfirmed(MotionEvent e) {
             onClickListener.setOnClickListener();
-            return false;
-        }
-
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            return false;
-        }
-
-        @Override
-        public void onLongPress(MotionEvent e) {
-
-        }
-
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            return false;
+            return super.onSingleTapConfirmed(e);
         }
     });
 }
