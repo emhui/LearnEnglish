@@ -157,6 +157,10 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             HeadSetUtil.getInstance().open(AudioActivity.this);
             try {
                 tv_show_name.setText(new Utils().getAudioName(service.getName()));
+                if (service.isPlaying()) {
+                    startPlayCD();
+                    showPlaymode();
+                }
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -173,10 +177,12 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         public void onDoubleClick() {
             next();
         }
+
         @Override
         public void onClick() {
             play_method();
         }
+
         @Override
         public void onThreeClick() {
             pre();
@@ -287,11 +293,11 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             @Override
             public void setOnSwipeListener(double distanceX) {
                 if (distanceX > 0) {
-                    next();
+                    pre();
                 }
 
                 if (distanceX < 0) {
-                    pre();
+                    next();
                 }
             }
         });
@@ -359,11 +365,11 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private void setPlaymode() {
         try {
             int playmode = service.getPlayMode();
-            if(playmode==AudioPlayService.REPEAT_ALL){
+            if (playmode == AudioPlayService.REPEAT_ALL) {
                 playmode = AudioPlayService.REPEAT_SINGLE;
-            }else if(playmode == AudioPlayService.REPEAT_SINGLE){
+            } else if (playmode == AudioPlayService.REPEAT_SINGLE) {
                 playmode = AudioPlayService.REPEAT_RANDOM;
-            }else if(playmode ==AudioPlayService.REPEAT_RANDOM){
+            } else if (playmode == AudioPlayService.REPEAT_RANDOM) {
                 playmode = AudioPlayService.REPEAT_ALL;
             }
             //保持
@@ -376,6 +382,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             e.printStackTrace();
         }
     }
+
     private void pre() {
         try {
             service.pre();
@@ -521,11 +528,11 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         try {
             int playmode = service.getPlayMode();
 
-            if(playmode==AudioPlayService.REPEAT_ALL){
+            if (playmode == AudioPlayService.REPEAT_ALL) {
                 btn_mode.setBackgroundResource(R.drawable.btn_all_repeat_selector);
-            }else if(playmode == AudioPlayService.REPEAT_SINGLE){
+            } else if (playmode == AudioPlayService.REPEAT_SINGLE) {
                 btn_mode.setBackgroundResource(R.drawable.btn_one_repeat_selector);
-            }else if(playmode ==AudioPlayService.REPEAT_ALL){
+            } else if (playmode == AudioPlayService.REPEAT_ALL) {
                 btn_mode.setBackgroundResource(R.drawable.btn_shuffle_selector);
             }
 
@@ -537,14 +544,15 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void startCDMsg(Constants constants){
+    public void startCDMsg(Constants constants) {
         startPlayCD();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void stopCDMsg(Utils utils){
+    public void stopCDMsg(Utils utils) {
         stopPlayCD();
     }
+
     /**
      * 设置播放按键样式为pause
      */
@@ -559,7 +567,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         iv_cd.clearAnimation();
         iv_handler.clearAnimation();
     }
-
 
 
     public void startPlayCD() {

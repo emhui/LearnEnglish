@@ -662,17 +662,10 @@ public class AudioPlayService extends Service {
                         .setSmallIcon(R.mipmap.music)
                         .setContentTitle("LE Music")
                         .setContentText(getName());
-// Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(this, AudioActivity.class);
 
-// The stack builder object will contain an artificial back stack for the
-// started Activity.
-// This ensures that navigating backward from the Activity leads out of
-// your application to the Home screen.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-// Adds the back stack for the Intent (but not the Intent itself)
         stackBuilder.addParentStack(AudioActivity.class);
-// Adds the Intent that starts the Activity to the top of the stack
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent =
                 stackBuilder.getPendingIntent(
