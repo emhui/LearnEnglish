@@ -5,7 +5,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.ycxy.ymh.learnenglish.MainActivity">
+    tools:context="com.ycxy.ymh.learnenglish.MainActivity"
+    android:fitsSystemWindows="true">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        android:fitsSystemWindows="true">
+    </android.support.v7.widget.Toolbar>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerView"
@@ -39,13 +50,13 @@
             android:background="@drawable/btn_audio_next_selector" />
 
         <com.ycxy.ymh.view.MyTextView
-            android:clickable="true"
             android:id="@+id/tv_audio_msg"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:gravity="center"
             android:background="@drawable/touch_foot_bg"
+            android:clickable="true"
+            android:gravity="center"
             android:singleLine="true" />
     </LinearLayout>
 </LinearLayout>

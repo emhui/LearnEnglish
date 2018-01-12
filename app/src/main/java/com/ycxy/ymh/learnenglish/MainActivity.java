@@ -2,11 +2,13 @@ package com.ycxy.ymh.learnenglish;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothHeadset;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -29,20 +31,30 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.Toolbar;
 
 import com.ycxy.ymh.activity.AudioActivity;
 import com.ycxy.ymh.adapter.AudioAdapter;
 import com.ycxy.ymh.bean.Audio;
+import com.ycxy.ymh.bean.MessageEvent;
 import com.ycxy.ymh.receiver.MusicBoradcastReceiver;
 import com.ycxy.ymh.service.AudioPlayService;
+import com.ycxy.ymh.service.LongRunningService;
 import com.ycxy.ymh.utils.Utils;
 import com.ycxy.ymh.view.MyDecoration;
 import com.ycxy.ymh.view.MyTextView;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 
@@ -77,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     };
 
     private android.content.IntentFilter filter;
+    private android.support.v7.widget.Toolbar toolbar;
 
     private void updataUI() {
         if (iService != null) {
@@ -148,15 +161,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void clsTilte() {
-        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+/*        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();
-        }
+        }*/
+        toolbar = findViewById(R.id.toolbar);
+        this.setSupportActionBar(toolbar);
     }
 
     private void initData() {
         isPermission();
         getDataFromLocal();
+        EventBus.getDefault().register(this);
         startService();
         position = new Utils().getPosfStor(this);
         handler.sendEmptyMessageDelayed(SHOWAUDIONAME, 100);
@@ -186,19 +202,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         receiver.setOnHEADSET_PLUGOUTListener(new MusicBoradcastReceiver.OnHEADSET_PLUGOUTListener() {
             @Override
             public void setOnHEADSET_PLUGOUTListener() {
-                try {
-                    pause();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
+                pause();
             }
         });
     }
 
+    Intent intentService;
+
     private void startService() {
-        Intent intent = new Intent(this, AudioPlayService.class);
-        startService(intent);
-        bindService(intent, conn, BIND_AUTO_CREATE);
+        intentService = new Intent(this, AudioPlayService.class);
+        startService(intentService);
+        bindService(intentService, conn, BIND_AUTO_CREATE);
     }
 
     private void initView() {
@@ -324,10 +338,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()) {/*
-            case R.id.ll_audio_msg:
-                startPlayView();
-                break;*/
+        switch (view.getId()) {
             case R.id.btn_audio_play:
                 try {
                     if (iService.isNull()) {
@@ -379,10 +390,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void pause() throws RemoteException {
-        if (!iService.isNull()) {
-            btn_audio_play.setBackgroundResource(R.mipmap.play);
-            iService.pause();
+    private void pause() {
+        try {
+            if (!iService.isNull()) {
+                btn_audio_play.setBackgroundResource(R.mipmap.play);
+                iService.pause();
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 
@@ -501,9 +516,94 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onDestroy() {
+        EventBus.getDefault().unregister(this);
         super.onDestroy();
         unregisterReceiver(receiver);
     }
 
     public MusicBoradcastReceiver receiver;
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.toolbar, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.timer:
+                timer();
+                break;
+            case R.id.skin:
+                Toast.makeText(this, "更换皮肤", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.exit:
+                exit();
+                break;
+        }
+        return true;
+    }
+
+
+    String[] items = new String[]{"不开启", "10分钟后", "20分钟后", "30分钟后", "45分钟后", "60分钟后"};
+    int[] itemtimers = new int[]{0, 1, 20, 30, 45, 60};
+    private int timer;
+    private Intent intent ;
+    private void timer() {
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("定时停止播放")
+                .setItems(items, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == 0) {
+                            if (longTimeIBinder != null) {
+                                longTimeIBinder.cancel();
+                                stopService(intent);
+                            }
+                            Toast.makeText(MainActivity.this, "定时播放已取消", Toast.LENGTH_SHORT).show();
+                        } else {
+                            timer = itemtimers[which];
+                            if (intent == null ) {
+                                intent = new Intent(MainActivity.this,LongRunningService.class);
+                            }
+                            if (longTimeIBinder == null) {
+                                startService(intent);
+                                bindService(intent,longConn,BIND_AUTO_CREATE);
+                            }
+                            if (longTimeIBinder != null) {
+                                longTimeIBinder.setTime(timer);
+                            }
+                            Toast.makeText(MainActivity.this, "设置成功，将于" + timer + "分钟后关闭", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }).create();
+        dialog.show();
+    }
+
+    private void exit() {
+        pause();
+        unbindService(conn);
+        stopService(intentService);
+        finish();
+    }
+
+    public LongRunningService.LongTimeIBinder longTimeIBinder;
+
+    public ServiceConnection longConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            longTimeIBinder = (LongRunningService.LongTimeIBinder) service;
+            longTimeIBinder.setTime(timer);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
+
+    @Subscribe(threadMode = ThreadMode.MAIN,sticky = false,priority = 0)
+    public void onTiemrTO(MessageEvent messageEvent){
+        pause();
+    }
 }

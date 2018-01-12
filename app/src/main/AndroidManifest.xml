@@ -4,8 +4,8 @@
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name=".MyApplication"
@@ -15,38 +15,55 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity
+            android:name=".MainActivity"
+            android:label="歌单">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.ycxy.ymh.activity.AudioActivity"
-            android:launchMode="singleTask"
-            android:configChanges="screenSize|orientation">
+        <activity
+            android:name="com.ycxy.ymh.activity.AudioActivity"
+            android:configChanges="screenSize|orientation"
+            android:launchMode="singleTask">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="audio/*"/>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="audio/*" />
             </intent-filter>
         </activity>
 
         <service
             android:name="com.ycxy.ymh.service.AudioPlayService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
 
         <receiver android:name="com.ycxy.ymh.receiver.MusicBoradcastReceiver">
             <intent-filter>
-                <action android:name="android.intent.action.HEADSET_PLUG"/>
+                <action android:name="android.intent.action.HEADSET_PLUG" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.ycxy.ymh.receiver.MediaButtonReceiver">
+            <intent-filter android:priority="1000">
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.ycxy.ymh.receiver.MediaButtonReceiver">
-            <intent-filter android:priority="1000">
-                <action android:name="android.intent.action.MEDIA_BUTTON" >
-                </action>
+        <service
+            android:name="com.ycxy.ymh.service.LongRunningService"
+            android:enabled="true"
+            android:exported="true" />
+
+        <receiver
+            android:name="com.ycxy.ymh.receiver.LongRunningReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.yoyhm.action.TIME_TO"/>
             </intent-filter>
         </receiver>
     </application>

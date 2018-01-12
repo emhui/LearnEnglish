@@ -5,18 +5,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.ycxy.ymh.activity.AudioActivity">
+    tools:context="com.ycxy.ymh.activity.AudioActivity"
+    android:fitsSystemWindows="true">
 
     <TextView
         android:id="@+id/tv_show_name"
         android:layout_width="match_parent"
-        android:layout_height="100px"
-        android:background="#aa08ce70"
+        android:layout_height="60dp"
+        android:background="#08ce70"
         android:clickable="true"
         android:gravity="center"
         android:singleLine="true"
         android:textColor="#ffffff"
-        android:textSize="18dp" />
+        android:textSize="18dp"
+        android:fitsSystemWindows="true"/>
 
     <com.ycxy.ymh.view.LyricView
         android:id="@+id/lyric"
@@ -64,7 +66,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#9908ce70"
+        android:background="#08ce70"
         android:orientation="vertical">
 
         <LinearLayout
@@ -77,7 +79,7 @@
                 android:id="@+id/seekbar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_weight="1"/>
 
             <TextView
                 android:id="@+id/tv_show_time"

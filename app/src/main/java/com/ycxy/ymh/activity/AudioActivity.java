@@ -1,5 +1,7 @@
 package com.ycxy.ymh.activity;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -69,10 +71,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private static final int LYRICLOADSUCCESS = 4;
     private ImageView iv_cd;
     private ImageView iv_handler;
-    /*    private Button btn_play;
-        private Button btn_next;
-        private Button btn_pre;
-        private Button btn_mode;  */
     private ImageView btn_play;
     private ImageView btn_next;
     private ImageView btn_pre;
@@ -87,6 +85,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private int position = 0;
     private Animation operatingAnim;
     private RotateAnimation rotate;
+    private RotateAnimation rotateBack;
     private LyricView lyricView;
     private IAudioPlayService service;
     private Utils utils = new Utils();
@@ -104,8 +103,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                     handler.sendEmptyMessageDelayed(UPDATAUI, 100);
                     break;
                 case FAILED:
-                    //tv_null.setVisibility(View.VISIBLE);
-                    //lyricView.setVisibility(View.GONE);
                     Toast.makeText(AudioActivity.this,
                             "未找到歌词", Toast.LENGTH_SHORT);
                     lyricView.reset();
@@ -114,8 +111,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                 case LYRICLOADSUCCESS:
                     String audioName = null;
                     try {
-                        // lyricView.setVisibility(View.VISIBLE);
-                        // tv_null.setVisibility(View.GONE);
                         audioName = utils.getAudioName(service.getName());
                         File file = new File(utils.nameToPath(audioName));
                         if (file.exists()) {
@@ -134,6 +129,9 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     private boolean isPlayCD = false;
     private Audio audio = null;
     private Uri uri = null;
+    private ObjectAnimator objectAnimator;
+    private Float currentValue = 0f;
+
 
     private void updataUI() {
         try {
@@ -200,6 +198,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     }
 
     private void initData() {
+        // iv_cd.setBackgroundResource(R.drawable.btn_shuffle_selector);
         EventBus.getDefault().register(this);
         startService();
         position = new Utils().getPosfStor(this);
@@ -244,21 +243,13 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         btn_menu = findViewById(R.id.btn_audio_menu);
         tv_show_Time = findViewById(R.id.tv_show_time);
         tv_show_name = findViewById(R.id.tv_show_name);
-        //tv_null = findViewById(R.id.tv_null);
         seekbar = findViewById(R.id.seekbar);
         lyricView = findViewById(R.id.lyric);
         rr_cd = findViewById(R.id.rr_cd);
         iv_cd = findViewById(R.id.iv_cd);
         iv_handler = findViewById(R.id.iv_handler);
 
-        operatingAnim = AnimationUtils.loadAnimation(this, R.anim.tip);
-        LinearInterpolator lin = new LinearInterpolator();
-        operatingAnim.setInterpolator(lin);
-
-        rotate = new RotateAnimation(0f, 28f, Animation.RELATIVE_TO_SELF,
-                0.8f, Animation.RELATIVE_TO_SELF, 0.1f);
-        rotate.setDuration(1000);
-        rotate.setFillAfter(true);
+        animation();
 
         btn_play.setOnClickListener(this);
         btn_pre.setOnClickListener(this);
@@ -312,6 +303,30 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                 }
             }
         });
+    }
+
+    private void animation() {
+
+        objectAnimator = ObjectAnimator.ofFloat(iv_cd, "rotation", 0f, 360f);//添加旋转动画，旋转中心默认为控件中点
+        objectAnimator.setDuration(3000);//设置动画时间
+        objectAnimator.setInterpolator(new LinearInterpolator());//动画时间线性渐变
+        objectAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+        objectAnimator.setRepeatMode(ObjectAnimator.RESTART);
+
+        operatingAnim = AnimationUtils.loadAnimation(this, R.anim.tip);
+        // operatingAnim.setStartOffset(1000);
+        LinearInterpolator lin = new LinearInterpolator();
+        operatingAnim.setInterpolator(lin);
+
+        rotate = new RotateAnimation(0f, 28f, Animation.RELATIVE_TO_SELF,
+                0.8f, Animation.RELATIVE_TO_SELF, 0.1f);
+        rotate.setDuration(1000);
+        rotate.setFillAfter(true);
+
+        rotateBack = new RotateAnimation(28f, 0f, Animation.RELATIVE_TO_SELF,
+                0.8f, Animation.RELATIVE_TO_SELF, 0.1f);
+        rotateBack.setDuration(1000);
+        rotateBack.setFillAfter(true);
     }
 
     /**
@@ -564,13 +579,15 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      * 开始停止CD
      */
     private void stopPlayCD() {
-        iv_cd.clearAnimation();
-        iv_handler.clearAnimation();
+        if (operatingAnim != null && rotateBack != null) {
+            iv_cd.clearAnimation();
+            iv_handler.startAnimation(rotateBack);
+        }
     }
 
 
     public void startPlayCD() {
-        if (operatingAnim != null && rotate != null) {
+        if (objectAnimator != null && rotate != null) {
             iv_cd.startAnimation(operatingAnim);
             iv_handler.startAnimation(rotate);
         }
@@ -764,5 +781,4 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         }
         return isRightLyric;
     }
-
 }

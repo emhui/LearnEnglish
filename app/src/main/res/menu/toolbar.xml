@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/skin"
+        android:title="更换皮肤"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/timer"
+        android:title="定时停止播放"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/exit"
+        android:title="退出"
+        app:showAsAction="never" />
+
+</menu>
