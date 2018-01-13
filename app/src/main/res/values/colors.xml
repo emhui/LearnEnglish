@@ -8,6 +8,8 @@
     <color name="netese_music_white">#f3f4f6</color>
     <color name="netese_music_divider">#e7e8ea</color>
 
+    <color name="le_green">#08ce70</color>
+
     <color name="artist">#8D8D8D</color>
     <color name="mask_image_view">#44555555</color>
     <color name="lrc_view_text">#8D8D8D</color>

@@ -19,6 +19,5 @@ public class LongRunningReceiver extends BroadcastReceiver {
         // an Intent broadcast.
         Toast.makeText(context,"时间到",Toast.LENGTH_SHORT).show();
         EventBus.getDefault().post(new MessageEvent());
-
     }
 }

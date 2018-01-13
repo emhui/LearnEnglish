@@ -12,13 +12,14 @@
         android:id="@+id/tv_show_name"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="#08ce70"
+        android:background="@color/le_green"
         android:clickable="true"
         android:gravity="center"
         android:singleLine="true"
         android:textColor="#ffffff"
-        android:textSize="18dp"
-        android:fitsSystemWindows="true"/>
+        android:textSize="20dp"
+        android:fitsSystemWindows="true"
+        android:text="琵琶行"/>
 
     <com.ycxy.ymh.view.LyricView
         android:id="@+id/lyric"
@@ -27,7 +28,7 @@
         android:layout_weight="1"
         android:clickable="true"
         android:visibility="gone"
-        app:highlightColor="#08ce70"
+        app:highlightColor="@color/le_green"
         app:hint="抱歉，未找到歌词!"
         app:hintColor="#8D8D8D"
         app:textColor="#000000" />
@@ -66,7 +67,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#08ce70"
+        android:background="@color/le_green"
         android:orientation="vertical">
 
         <LinearLayout
