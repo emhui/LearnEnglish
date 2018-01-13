@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothHeadset;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,6 +15,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -191,11 +193,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         receiver.setOnHEADSET_PLUGINListener(new MusicBoradcastReceiver.OnHEADSET_PLUGINListener() {
             @Override
             public void setOnHEADSET_PLUGINListener() {
-                try {
-                    start();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
+                start();
             }
         });
         // 耳机或蓝牙耳机断开的监听
@@ -231,8 +229,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onItemClick(RecyclerView.ViewHolder vh) {
                 // 开始播放音乐
                 position = vh.getAdapterPosition();
-                Log.d(TAG, "onItemClick: " + position);
                 openAudio();
+            }
+
+            @Override
+            public void onItemLongPress(RecyclerView.ViewHolder vh) {
+                position = vh.getAdapterPosition();
+                showInfo();
             }
         });
 
@@ -383,10 +386,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startActivity(intent);
     }
 
-    private void start() throws RemoteException {
-        if (!iService.isNull()) {
-            btn_audio_play.setBackgroundResource(R.mipmap.pause);
-            iService.start();
+    private void start() {
+        try {
+            if (!iService.isNull()) {
+                btn_audio_play.setBackgroundResource(R.mipmap.pause);
+                iService.start();
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 
@@ -433,6 +440,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         public abstract void onItemClick(RecyclerView.ViewHolder vh);
 
+        public abstract void onItemLongPress(RecyclerView.ViewHolder vh);
+
         /**
          * 根据手势
          */
@@ -468,7 +477,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 View childe = mRecyclerView.findChildViewUnder(e.getX(), e.getY());
                 if (childe != null) {
                     RecyclerView.ViewHolder VH = mRecyclerView.getChildViewHolder(childe);
-                    onItemClick(VH);
+                    onItemLongPress(VH);
                 }
             }
 
@@ -486,9 +495,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED
                 && ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_SETTINGS)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(MainActivity.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_SETTINGS}, 1);
         } else {
         }
     }
@@ -545,11 +558,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return true;
     }
 
+    String[] infos = new String[]{"播放", "设置铃声", "查看歌曲信息", "删除"};
+
+    private void showInfo() {
+        String name = new Utils().getAudioName(audioArrayList.get(position).getName());
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("歌曲：" + name)
+                .setItems(infos, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Toast.makeText(MainActivity.this, "定时播放已取消", Toast.LENGTH_SHORT).show();
+                        switch (which) {
+                            case 0:
+                                openAudio();
+                                break;
+                            case 1:
+                                setRingtone();
+                                break;
+                            case 2:
+                                break;
+                            case 3:
+                                break;
+                        }
+                    }
+                }).create();
+        dialog.show();
+    }
+
+    private void setRingtone() {
+        Audio audio = audioArrayList.get(position);
+        Uri uri = MediaStore.Audio.Media.getContentUriForPath(audio.getData());//获取系统音频文件的Uri
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DATA, audio.getData());
+        values.put(MediaStore.MediaColumns.TITLE, audio.getName());
+        values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/*");
+        Uri newUri = this.getContentResolver().insert(uri, values);//将文件插入系统媒体库，并获取新的Uri
+        RingtoneManager.setActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALL, newUri);//设置铃声
+        Toast.makeText(this, "铃声设置成功~", Toast.LENGTH_SHORT).show();
+    }
+
 
     String[] items = new String[]{"不开启", "10分钟后", "20分钟后", "30分钟后", "45分钟后", "60分钟后"};
     int[] itemtimers = new int[]{0, 1, 20, 30, 45, 60};
     private int timer;
-    private Intent intent ;
+    private Intent intent;
+
     private void timer() {
         AlertDialog dialog = new AlertDialog.Builder(this).setTitle("定时停止播放")
                 .setItems(items, new DialogInterface.OnClickListener() {
@@ -563,12 +615,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             Toast.makeText(MainActivity.this, "定时播放已取消", Toast.LENGTH_SHORT).show();
                         } else {
                             timer = itemtimers[which];
-                            if (intent == null ) {
-                                intent = new Intent(MainActivity.this,LongRunningService.class);
+                            if (intent == null) {
+                                intent = new Intent(MainActivity.this, LongRunningService.class);
                             }
                             if (longTimeIBinder == null) {
                                 startService(intent);
-                                bindService(intent,longConn,BIND_AUTO_CREATE);
+                                bindService(intent, longConn, BIND_AUTO_CREATE);
                             }
                             if (longTimeIBinder != null) {
                                 longTimeIBinder.setTime(timer);
@@ -602,8 +654,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
-    @Subscribe(threadMode = ThreadMode.MAIN,sticky = false,priority = 0)
-    public void onTiemrTO(MessageEvent messageEvent){
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = false, priority = 0)
+    public void onTiemrTO(MessageEvent messageEvent) {
         pause();
+        stopService(intent);
     }
 }

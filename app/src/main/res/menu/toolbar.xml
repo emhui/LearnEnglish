@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/skin"
-        android:title="更换皮肤"
+        android:title="在线搜歌"
         app:showAsAction="never" />
 
     <item

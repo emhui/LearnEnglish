@@ -32,5 +32,4 @@ dependencies {
     compile 'com.alibaba:fastjson:1.1.67.android'
     compile 'org.greenrobot:eventbus:3.1.1'
     compile 'cn.zhaiyifan:lyricview:1.0.1'
-    compile 'com.solid.skin:skinlibrary:latestVersion'
 }
