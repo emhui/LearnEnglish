@@ -15,6 +15,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -45,6 +46,7 @@ import android.widget.Toast;
 import android.widget.Toolbar;
 
 import com.ycxy.ymh.activity.AudioActivity;
+import com.ycxy.ymh.activity.MVListActivity;
 import com.ycxy.ymh.activity.OnlineAudioActivity;
 import com.ycxy.ymh.adapter.AudioAdapter;
 import com.ycxy.ymh.bean.Audio;
@@ -62,6 +64,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, SwipeRefreshLayout.OnRefreshListener {
@@ -105,13 +108,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (iService != null) {
             try {
                 updataBtnPlay();
-                // 记住切割名字/*
-/*                if (iService.getName().equals("")) {
-                    tv_audio_msg.setText("当前没有音乐在播放");
-                } else {
-                    audioName = CacheUtils.getFromLoacl(this,OnlineAudioActivity.key_audioname);
-                    tv_audio_msg.setText(audioName);
-                }*/
                 audioName = CacheUtils.getFromLoacl(this,OnlineAudioActivity.key_audioname);
                 tv_audio_msg.setText(audioName);
             } catch (Exception e) {
@@ -176,10 +172,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void clsTilte() {
-/*        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.hide();
-        }*/
+
         toolbar = findViewById(R.id.toolbar);
         this.setSupportActionBar(toolbar);
     }
@@ -436,6 +429,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        adapter.notifyDataSetChanged();
                         swipeRefreshLayout.setRefreshing(false);
                     }
                 });
@@ -588,6 +582,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.skin:
                 startActivity(new Intent(MainActivity.this, OnlineAudioActivity.class));
                 break;
+            case R.id.mv:
+                startActivity(new Intent(MainActivity.this, MVListActivity.class));
+                break;
             case R.id.exit:
                 exit();
                 break;
@@ -614,11 +611,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             case 2:
                                 break;
                             case 3:
+                                delete();
                                 break;
                         }
                     }
                 }).create();
         dialog.show();
+    }
+
+    private void delete() {
+        Audio audio = audioArrayList.get(position);
+        final File file = new File(audio.getData());
+        String name = audio.getName();
+        if (file.exists()) {
+            AlertDialog dialog = new AlertDialog.Builder(this).setTitle("确定删除 " + name + "?")
+                    .setPositiveButton("是", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            file.delete();
+                            //audioArrayList.remove(position);
+                            adapter.remove(position);
+                            new Utils().updataMediaData(MainActivity.this);
+                            Toast.makeText(MainActivity.this,"删除成功",Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .setNegativeButton("否", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            return;
+                        }
+                    })
+                    .create();
+            dialog.show();
+        }
     }
 
     private void setRingtone() {

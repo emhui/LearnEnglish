@@ -6,6 +6,10 @@
         android:id="@+id/skin"
         android:title="在线搜歌"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/mv"
+        android:title="在线MV"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/timer"

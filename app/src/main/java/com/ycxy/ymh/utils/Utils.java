@@ -1,11 +1,18 @@
 package com.ycxy.ymh.utils;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.MediaScannerConnection;
 import android.net.TrafficStats;
+import android.os.Build;
+import android.os.Environment;
 import android.util.Log;
 
+import com.ycxy.ymh.bean2.DataBean;
 import com.ycxy.ymh.service.AudioPlayService;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -204,5 +211,17 @@ public class Utils {
     public static int getPlaymode(Context context,String key){
         SharedPreferences sharedPreferences = context.getSharedPreferences(Constants.MODE,Context.MODE_PRIVATE);
         return sharedPreferences.getInt(key, AudioPlayService.REPEAT_ALL);
+    }
+
+    // 发送更新
+    public void updataMediaData(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { // 判断SDK版本是不是4.4或者高于4.4
+            String[] paths = new String[]{Environment.getExternalStorageDirectory().toString()};
+            MediaScannerConnection.scanFile(context, paths, null, null);
+        } else {
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED));
+        }
+
+        EventBus.getDefault().post(new DataBean());
     }
 }

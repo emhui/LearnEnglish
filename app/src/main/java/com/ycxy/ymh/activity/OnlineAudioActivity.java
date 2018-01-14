@@ -99,7 +99,7 @@ public class OnlineAudioActivity extends AppCompatActivity implements MediaPlaye
                     Toast.makeText(OnlineAudioActivity.this, "歌词获取成功", Toast.LENGTH_SHORT).show();
                     break;
                 case DOWNLOADSUCCESS:
-                    updataMediaData();
+                    new Utils().updataMediaData(OnlineAudioActivity.this);
                     Toast.makeText(OnlineAudioActivity.this, "歌区下载成功", Toast.LENGTH_SHORT).show();
                     break;
             }
@@ -118,7 +118,6 @@ public class OnlineAudioActivity extends AppCompatActivity implements MediaPlaye
         musicInfo = JsonUtils.parseMusic(response);
         Toast.makeText(OnlineAudioActivity.this, musicInfo.getData().get(0).getUrl(), Toast.LENGTH_SHORT).show();
         download_music_url = musicInfo.getData().get(0).getUrl();
-        /*play(download_music_url);*/
         try {
             service.openOtherAudio(download_music_url);
         } catch (RemoteException e) {
@@ -379,17 +378,7 @@ public class OnlineAudioActivity extends AppCompatActivity implements MediaPlaye
         super.onBackPressed();
     }
 
-    // 更新数据库
-    private void updataMediaData() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { // 判断SDK版本是不是4.4或者高于4.4
-            String[] paths = new String[]{Environment.getExternalStorageDirectory().toString()};
-            MediaScannerConnection.scanFile(this, paths, null, null);
-        } else {
-            sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED));
-        }
 
-        EventBus.getDefault().post(new DataBean());
-    }
 
 
     private IAudioPlayService service;

@@ -983,10 +983,11 @@ public class LyricView extends View {
             //3.毫秒
             long mil = Long.parseLong(s2[1]);
 
+            // 02:04.12 格式
             if (s2[1].length() == 2) {
                 result = min * 60 * 1000 + second * 1000 + mil * 10;
             }
-
+            // 02:04.12 格式
             if (s2[1].length() == 3) {
                 result = min * 60 * 1000 + second * 1000 + mil;
             }

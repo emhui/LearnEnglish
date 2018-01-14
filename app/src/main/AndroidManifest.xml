@@ -69,6 +69,10 @@
             </intent-filter>
         </receiver>
 
+        <activity android:name="com.ycxy.ymh.activity.MVListActivity" />
+        <activity android:name="com.ycxy.ymh.activity.VideoActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:screenOrientation="portrait"></activity>
     </application>
 
 </manifest>

@@ -34,8 +34,10 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder>{
         this.audioArrayList = audioArrayList;
     }
 
-
-
+    public void remove(int pos){
+        audioArrayList.remove(pos);
+        notifyItemRemoved(pos);
+    }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
