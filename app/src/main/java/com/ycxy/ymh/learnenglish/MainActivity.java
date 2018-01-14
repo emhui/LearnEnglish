@@ -27,6 +27,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -44,12 +45,15 @@ import android.widget.Toast;
 import android.widget.Toolbar;
 
 import com.ycxy.ymh.activity.AudioActivity;
+import com.ycxy.ymh.activity.OnlineAudioActivity;
 import com.ycxy.ymh.adapter.AudioAdapter;
 import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.bean.MessageEvent;
+import com.ycxy.ymh.bean2.DataBean;
 import com.ycxy.ymh.receiver.MusicBoradcastReceiver;
 import com.ycxy.ymh.service.AudioPlayService;
 import com.ycxy.ymh.service.LongRunningService;
+import com.ycxy.ymh.utils.CacheUtils;
 import com.ycxy.ymh.utils.Utils;
 import com.ycxy.ymh.view.MyDecoration;
 import com.ycxy.ymh.view.MyTextView;
@@ -60,7 +64,7 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, SwipeRefreshLayout.OnRefreshListener {
 
     private static final int SUCCESSQUERY = 0;
     private static final int SHOWAUDIONAME = 1;
@@ -70,9 +74,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RecyclerView recyclerView;
     private Button btn_audio_play;
     private Button btn_audio_next;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private MyTextView tv_audio_msg;
 
     private boolean isPlaying = false;
+    private AudioAdapter adapter;
 
     private Handler handler = new Handler() {
         @Override
@@ -80,7 +86,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             super.handleMessage(msg);
             switch (msg.what) {
                 case SUCCESSQUERY:
-                    AudioAdapter adapter = new AudioAdapter(MainActivity.this, audioArrayList);
+                    Log.d(TAG, "handleMessage: " + audioArrayList.size());
+                    adapter = new AudioAdapter(MainActivity.this, audioArrayList);
                     recyclerView.setAdapter(adapter);
                     break;
                 case SHOWAUDIONAME:
@@ -92,18 +99,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private android.content.IntentFilter filter;
     private android.support.v7.widget.Toolbar toolbar;
+    private String audioName;
 
     private void updataUI() {
         if (iService != null) {
             try {
                 updataBtnPlay();
-                // 记住切割名字
-                if (iService.getName().equals("")) {
+                // 记住切割名字/*
+/*                if (iService.getName().equals("")) {
                     tv_audio_msg.setText("当前没有音乐在播放");
                 } else {
-                    tv_audio_msg.setText("正在播放 " + iService.getName().split("\\.")[0]);
-                }
-            } catch (RemoteException e) {
+                    audioName = CacheUtils.getFromLoacl(this,OnlineAudioActivity.key_audioname);
+                    tv_audio_msg.setText(audioName);
+                }*/
+                audioName = CacheUtils.getFromLoacl(this,OnlineAudioActivity.key_audioname);
+                tv_audio_msg.setText(audioName);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
@@ -146,6 +157,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (iService != null) {
             try {
                 iService.openAudio(position);
+                CacheUtils.saveToLocal(this,OnlineAudioActivity.key_audioname,
+                        new Utils().getAudioName(audioArrayList.get(position).getName()));
                 Log.d(TAG, "openAudio: " + position);
             } catch (RemoteException e) {
                 e.printStackTrace();
@@ -219,8 +232,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_audio_play = findViewById(R.id.btn_audio_play);
         btn_audio_next = findViewById(R.id.btn_audio_next);
         tv_audio_msg = findViewById(R.id.tv_audio_msg);
-
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh);
+        swipeRefreshLayout.setOnRefreshListener(this);
+        swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
         LinearLayoutManager manager = new LinearLayoutManager(this);
+
         recyclerView.setLayoutManager(manager);
         recyclerView.addItemDecoration(new MyDecoration(this, LinearLayoutManager.HORIZONTAL));
         recyclerView.addOnItemTouchListener(new MyOnItemTouchListener(recyclerView) {
@@ -305,10 +321,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         String data = cursor.getString(3);//视频的播放地址
                         mediaItem.setData(data);
-                        Log.d(TAG, "run:data " + data);
+
                         String artist = cursor.getString(4);//艺术家
                         mediaItem.setArtist(artist);
-                        Log.d(TAG, "run: artist" + artist);
                     }
                     cursor.close();
                 }
@@ -406,6 +421,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onRefresh() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
+                });
+            }
+        }).start();
+
+
     }
 
     /**
@@ -549,7 +586,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 timer();
                 break;
             case R.id.skin:
-                Toast.makeText(this, "更换皮肤", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(MainActivity.this, OnlineAudioActivity.class));
                 break;
             case R.id.exit:
                 exit();
@@ -658,5 +695,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onTiemrTO(MessageEvent messageEvent) {
         pause();
         stopService(intent);
+    }
+
+    @Subscribe(threadMode = ThreadMode.ASYNC, sticky = false, priority = 0)
+    public void scanDataBase(DataBean dataBean) {
+        getDataFromLocal();
+        Log.d(TAG, "scanDataBase: ==============");
     }
 }

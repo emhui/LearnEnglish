@@ -37,6 +37,7 @@
                 <data android:mimeType="audio/*" />
             </intent-filter>
         </activity>
+        <activity android:name="com.ycxy.ymh.activity.OnlineAudioActivity" />
 
         <service
             android:name="com.ycxy.ymh.service.AudioPlayService"
@@ -67,6 +68,7 @@
                 <action android:name="android.yoyhm.action.TIME_TO" />
             </intent-filter>
         </receiver>
+
     </application>
 
 </manifest>
