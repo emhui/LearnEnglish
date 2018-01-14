@@ -30,15 +30,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
+import com.ycxy.ymh.adapter.MusicListAdapter;
 import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.bean.LyricBean;
+import com.ycxy.ymh.bean.MusicList;
 import com.ycxy.ymh.bean.ResultBean;
+import com.ycxy.ymh.bean3.Lyric;
+import com.ycxy.ymh.bean4.ResultInter;
 import com.ycxy.ymh.learnenglish.IAudioPlayService;
 import com.ycxy.ymh.learnenglish.MainActivity;
 import com.ycxy.ymh.learnenglish.R;
 import com.ycxy.ymh.service.AudioPlayService;
+import com.ycxy.ymh.utils.CacheUtils;
 import com.ycxy.ymh.utils.Constants;
 import com.ycxy.ymh.utils.HeadSetUtil;
+import com.ycxy.ymh.utils.JsonUtils;
+import com.ycxy.ymh.utils.NetUtils;
 import com.ycxy.ymh.utils.Utils;
 import com.ycxy.ymh.view.LyricView;
 import com.ycxy.ymh.view.MyRelativeLayout;
@@ -55,8 +62,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.List;
 
 
@@ -64,11 +69,18 @@ import okhttp3.Call;
 
 public class AudioActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private static final int SHOWAUDIONAME = 0;
-    private static final int UPDATAUI = 2;
+    public static final int GETLIST = 0;
+    public static final int GETLISTERRO = 1;
+    public static final int GETMUSICINFO = 2;
+    private static final int GETMUSICLYRIC = 3;
+    public static final int DOWNLOADSUCCESS = 4;
+
+    private static final int SHOWAUDIONAME = 5;
+    private static final int UPDATAUI = 6;
     private static final String TAG = "AudioActivity";
-    private static final int FAILED = 3;
-    private static final int LYRICLOADSUCCESS = 4;
+    private static final int FAILED = 7;
+    private static final int LYRICLOADSUCCESS = 8;
+    private static final int ALLFAILED = 9;
     private ImageView iv_cd;
     private ImageView iv_handler;
     private ImageView btn_play;
@@ -103,15 +115,16 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                     handler.sendEmptyMessageDelayed(UPDATAUI, 100);
                     break;
                 case FAILED:
-                    Toast.makeText(AudioActivity.this,
-                            "未找到歌词", Toast.LENGTH_SHORT);
                     lyricView.reset();
+                    // 如果失败调用第二个接口
+                    String urlGetAuidoList = OnlineAudioActivity.url_getID + audioName;
+                    loadLyricFormNet(urlGetAuidoList, handler, AudioActivity.this, OnlineAudioActivity.key_list, OnlineAudioActivity.GETLIST);
                     break;
                 // 歌词下载成功
                 case LYRICLOADSUCCESS:
-                    String audioName = null;
                     try {
-                        audioName = utils.getAudioName(service.getName());
+                        audioName = CacheUtils.getFromLoacl(AudioActivity.this,OnlineAudioActivity.key_audioname);
+                        Log.d(TAG, "handleMessage: " + audioName);
                         File file = new File(utils.nameToPath(audioName));
                         if (file.exists()) {
                             lyricView.setLyricFile(file);
@@ -119,9 +132,29 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                             lyricView.reset();
                         }
 
-                    } catch (RemoteException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
+                    break;
+                case GETLIST:
+                    getList();
+                    break;
+                case GETLISTERRO:
+                    Toast.makeText(AudioActivity.this, "查询失败", Toast.LENGTH_SHORT).show();
+                case GETMUSICINFO:
+                    // getInfo();
+                    Toast.makeText(AudioActivity.this, "歌词信息获取成功", Toast.LENGTH_SHORT).show();
+                    break;
+                case GETMUSICLYRIC:
+                    downLoadLyric();
+                    Toast.makeText(AudioActivity.this, "歌词获取成功", Toast.LENGTH_SHORT).show();
+                    break;
+                case DOWNLOADSUCCESS:
+                    Toast.makeText(AudioActivity.this, "歌区下载成功", Toast.LENGTH_SHORT).show();
+                    break;
+                case ALLFAILED:
+                    lyricView.reset();
+                    Toast.makeText(AudioActivity.this, "我们尽力了，歌词真的找不到了~", Toast.LENGTH_SHORT).show();
                     break;
             }
         }
@@ -154,8 +187,9 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             HeadSetUtil.getInstance().setOnHeadSetListener(headSetListener);
             HeadSetUtil.getInstance().open(AudioActivity.this);
             try {
-                tv_show_name.setText(new Utils().getAudioName(service.getName()));
+                tv_show_name.setText(audioName);
                 if (service.isPlaying()) {
+                    getLyric();
                     startPlayCD();
                     showPlaymode();
                 }
@@ -438,29 +472,44 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     }
 
     private void showLyric() throws RemoteException {
-        getLyric();
+        // getLyric();
         lyricView.setVisibility(View.VISIBLE);
         rr_cd.setVisibility(View.GONE);
         btn_menu.setBackgroundResource(R.drawable.btn_audio_show_lyric_stop_selector);
         isPlayCD = !isPlayCD;
     }
 
+    String audioName;
+
     /**
      * 获取歌词
      *
      * @throws RemoteException
      */
-    private void getLyric() throws RemoteException {
+    private void getLyric() {
+        // lyricView.reset();
         // 获取真正名字T he Piano Guys-Because of You.mp3
-        String audioName = utils.getAudioName(service.getName());
+        try {
+            // audioName = utils.getAudioName(service.getName());
+            audioName = CacheUtils.getFromLoacl(this, OnlineAudioActivity.key_audioname);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         // 判断本地是否已存在该歌曲
         if (utils.isLyricExit(audioName)) {
             // 成功找到消息，更新UI
             handler.sendEmptyMessage(LYRICLOADSUCCESS);
         } else {
             // 从网络加载歌词
-            loadLyricFormNet();
+            // 先实现接口一
+            loadLyricFormNetInter1();
+            //
         }
+    }
+
+    private void loadLyricFormNet(String urlGetAuidoList, Handler handler, AudioActivity activity, String key_list, int getlist) {
+        Log.d(TAG, "loadLyricFormNet: 调用接口二");
+        NetUtils.getNetMusic(urlGetAuidoList, handler, activity, key_list, getlist);
     }
 
 
@@ -540,6 +589,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      */
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void updataCDandLyric(Audio audio) {
+
         try {
             int playmode = service.getPlayMode();
 
@@ -551,7 +601,12 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                 btn_mode.setBackgroundResource(R.drawable.btn_shuffle_selector);
             }
 
-            tv_show_name.setText(new Utils().getAudioName(service.getName()));
+//                tv_show_name.setText(new Utils().getAudioName(service.getName()));
+//            audioName = service.getName();
+            // audioName = CacheUtils.getFromLoacl(this, OnlineAudioActivity.key_audioname);
+            audioName = service.getName();
+            tv_show_name.setText(service.getName());
+            // tv_show_name.setText(audioName);
             getLyric();
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -613,7 +668,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      */
     private void updataBtnPlay() throws RemoteException {
         if (!service.isPlaying()) {
-
             setBtnPlay();
         } else {
             setBtnPause();
@@ -645,14 +699,16 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
 
     @Override
     protected void onResume() {
+        audioName = CacheUtils.getFromLoacl(this, OnlineAudioActivity.key_audioname);
+        Log.d(TAG, "onResume: " + audioName);
         super.onResume();
-        // startPlayCD();
     }
+
 
     /**
      * 从网络加载歌词
      */
-    private void loadLyricFormNet() {
+    private void loadLyricFormNetInter1() {
         try {
             OkHttpUtils
                     .get()
@@ -661,7 +717,8 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                     .execute(new StringCallback() {
                         @Override
                         public void onError(Call call, Exception e, int id) {
-                            Log.d(TAG, "onError: ");
+                            // 发生错误调用第二个接口
+                            handler.sendEmptyMessage(FAILED);
                         }
 
                         @Override
@@ -677,7 +734,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     LyricBean bean;
     int lyricNum = 0;
     int lyricIndex = 0;
-    List<ResultBean> lyricUrlList;
+    List<ResultInter> lyricUrlList;
 
     /**
      * 序列化数据
@@ -696,7 +753,6 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
             String url = lyricUrlList.get(lyricIndex).getLrc();
             Log.d(TAG, "parseJSON: " + url);
             loadLyricFormNet(url);
-
         } else {
             handler.sendEmptyMessage(FAILED);
         }
@@ -705,7 +761,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
     /**
      * 下载歌词到本地
      *
-     * @param url
+     * @param
      */
     private void loadLyricFormNet(String url) {
         try {
@@ -717,13 +773,15 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                     {
                         @Override
                         public void onError(Call call, Exception e, int id) {
-                            Log.d(TAG, "onError: ---------------" + e.toString());
+                            // 查找错误调用第二个接口
+                            handler.sendEmptyMessage(FAILED);
                         }
 
                         @Override
                         public void onResponse(File response, int id) {
                             Log.d(TAG, "onResponse: ");
                             if (isRightLyric(response)) {
+                                Log.d(TAG, "onResponse: 成功调用接口一");
                                 handler.sendEmptyMessage(LYRICLOADSUCCESS);
                             } else {
                                 if (lyricIndex++ <= lyricNum - 1) {
@@ -781,4 +839,37 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
         }
         return isRightLyric;
     }
+
+    private int onlineAudioID;
+
+    private void getList() {
+        String response = CacheUtils.getFromLoacl(AudioActivity.this, OnlineAudioActivity.key_list);
+        MusicList musicList = JsonUtils.parseMusicList(response);
+        if (musicList.getCode() == 200 && musicList.getResult().getSongCount() > 0) {
+            onlineAudioID = musicList.getResult().getSongs().get(0).getId();
+            String download_lyric_url = OnlineAudioActivity.url_getLyric + onlineAudioID;
+            NetUtils.getNetMusic(download_lyric_url, handler, AudioActivity.this, OnlineAudioActivity.key_lyric, OnlineAudioActivity.GETMUSICLYRIC);
+        } else {
+            handler.sendEmptyMessage(ALLFAILED);
+        }
+
+    }
+
+    // 保存数据
+    private void downLoadLyric() {
+        String response = CacheUtils.getFromLoacl(this, OnlineAudioActivity.key_lyric);
+        Lyric lyric = JsonUtils.parseLyric(response);
+        if (lyric.getCode() == 200) {
+            try {
+                String lyricContext = lyric.getLrc().getLyric();
+                new Utils().saveLyric(audioName, lyricContext);
+                handler.sendEmptyMessage(LYRICLOADSUCCESS);
+            } catch (Exception e) {
+                handler.sendEmptyMessage(ALLFAILED);
+            }
+        } else {
+            handler.sendEmptyMessage(ALLFAILED);
+        }
+    }
+
 }

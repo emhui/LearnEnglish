@@ -1,5 +1,7 @@
 package com.ycxy.ymh.bean;
 
+import com.ycxy.ymh.bean4.ResultInter;
+
 import java.util.List;
 
 /**
@@ -16,7 +18,7 @@ public class LyricBean {
 
     private int code;
     private int count;
-    public List<ResultBean> result;
+    public List<ResultInter> result;
 
     public int getCode() {
         return code;
@@ -34,11 +36,11 @@ public class LyricBean {
         this.count = count;
     }
 
-    public List<ResultBean> getResult() {
+    public List<ResultInter> getResult() {
         return result;
     }
 
-    public void setResult(List<ResultBean> result) {
+    public void setResult(List<ResultInter> result) {
         this.result = result;
     }
 }

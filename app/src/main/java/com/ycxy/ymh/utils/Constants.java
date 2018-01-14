@@ -17,7 +17,8 @@ public class Constants {
     /**
      * 本地文件存储目录
      */
-    public static String STROAGEPATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "lyric";
+    public static String STROAGEPATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator +"YMusic" + File.separator + "lyric";
+    public static String STROAGEPATHMUSICDOWNLOAD = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator +"YMusic" + File.separator + "music";
     public static String LYRICAPI = "http://geci.me/api/lyric/";
     public static String URL = "";
 }

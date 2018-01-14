@@ -5,6 +5,7 @@
     <color name="colorAccent">#FF4081</color>
     <color name="line_grey">#11000000</color>
     <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
     <color name="netese_music_white">#f3f4f6</color>
     <color name="netese_music_divider">#e7e8ea</color>
 

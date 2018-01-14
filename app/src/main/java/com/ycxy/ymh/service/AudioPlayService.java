@@ -22,14 +22,18 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.ycxy.ymh.activity.AudioActivity;
+import com.ycxy.ymh.activity.OnlineAudioActivity;
 import com.ycxy.ymh.bean.Audio;
+import com.ycxy.ymh.bean2.DataBean;
 import com.ycxy.ymh.learnenglish.IAudioPlayService;
-import com.ycxy.ymh.learnenglish.MainActivity;
 import com.ycxy.ymh.learnenglish.R;
+import com.ycxy.ymh.utils.CacheUtils;
 import com.ycxy.ymh.utils.Constants;
 import com.ycxy.ymh.utils.Utils;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -327,6 +331,7 @@ public class AudioPlayService extends Service {
             EventBus.getDefault().post(new Constants());
             // 每次播放都将地址保存到本地，防止被杀死
             new Utils().savePos2Stor(this, position);
+            getName();
             mediaPlayer.start();
             setNotify();
         }
@@ -447,16 +452,23 @@ public class AudioPlayService extends Service {
      * @return
      */
     private String getName() {
-        if (otherPath == null)
-            return audio.getName();
-        else {
-            // /storage/emulated/0/lyric/庐州月.lrc
-            String name = otherPath.split("\\.")[0]; // /storage/emulated/0/lyric/庐州月
-            String[] ns = name.split("/");
-            int size = ns.length;
-            name = ns[size - 1];
-            return name;
+        String name = "";
+        if (otherPath == null){
+            name = new Utils().getAudioName(audio.getName());
+            CacheUtils.saveToLocal(AudioPlayService.this, OnlineAudioActivity.key_audioname,name);
         }
+        else {
+            if (!otherPath.startsWith("http")){
+                // /storage/emulated/0/lyric/庐州月.lrc
+                name = otherPath.split("\\.")[0]; // /storage/emulated/0/lyric/庐州月
+                String[] ns = name.split("/");
+                int size = ns.length;
+                name = ns[size - 1];
+                CacheUtils.saveToLocal(AudioPlayService.this, OnlineAudioActivity.key_audioname,name);
+            }
+        }
+
+        return name;
     }
 
     /**
@@ -686,12 +698,12 @@ public class AudioPlayService extends Service {
         }
     }
 
-    /**
-     * 保存数据到本地
-     */
     @Override
     public void onDestroy() {
-        Log.d(TAG, "onDestroy: ----------------------++++++++++++++++");
         super.onDestroy();
     }
-}
+
+    @Subscribe(threadMode = ThreadMode.ASYNC, sticky = false, priority = 0)
+    public void scanDataBase(DataBean dataBean){
+        getDataFromLocal();
+    }}

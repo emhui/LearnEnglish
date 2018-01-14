@@ -3,10 +3,13 @@ package com.ycxy.ymh.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.TrafficStats;
+import android.util.Log;
 
 import com.ycxy.ymh.service.AudioPlayService;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Formatter;
 import java.util.Locale;
 
@@ -83,16 +86,37 @@ public class Utils {
         return  netSpeed;
     }
 
+
     /**
      * 建立一个存储音乐歌词的文件
      */
     public void hasFile() {
         File file = new File(Constants.STROAGEPATH);
+        File filel = new File(Constants.STROAGEPATHMUSICDOWNLOAD);
+
         if (!file.exists()) {
             file.mkdir();
         }
+
+        if (!filel.exists()) {
+            filel.mkdir();
+        }
     }
 
+    // 保存歌词
+    public void saveLyric(String name, String msg){
+        try {
+            File file = new File(Constants.STROAGEPATH + File.separator + name + ".lrc");
+            FileWriter fileWriter = new FileWriter(file);
+            fileWriter.write(msg);
+
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static final String TAG = "Utils";
     /**
      * 判断歌词是否存在
      * @return
@@ -104,6 +128,7 @@ public class Utils {
 
         for (File f : files) {
             if (f.getName().equals(songName + ".lrc")) {
+                Log.d(TAG, "isLyricExit: " + songName);
                 return true;
             }
         }

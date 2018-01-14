@@ -3,6 +3,7 @@ package com.ycxy.ymh.learnenglish;
 import android.app.Application;
 
 import com.zhy.http.okhttp.OkHttpUtils;
+import com.zhy.http.okhttp.https.HttpsUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -18,8 +19,9 @@ public class MyApplication extends Application
     public void onCreate()
     {
         super.onCreate();
-
+        HttpsUtils.SSLParams sslParams = HttpsUtils.getSslSocketFactory(null, null, null);
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .sslSocketFactory(sslParams.sSLSocketFactory, sslParams.trustManager)
 //                .addInterceptor(new LoggerInterceptor("TAG"))
                 .connectTimeout(10000L, TimeUnit.MILLISECONDS)
                 .readTimeout(10000L, TimeUnit.MILLISECONDS)
