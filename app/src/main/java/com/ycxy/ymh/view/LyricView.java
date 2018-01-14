@@ -18,6 +18,7 @@ import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -982,7 +983,14 @@ public class LyricView extends View {
             //3.毫秒
             long mil = Long.parseLong(s2[1]);
 
-            result = min * 60 * 1000 + second * 1000 + mil * 10;
+            if (s2[1].length() == 2) {
+                result = min * 60 * 1000 + second * 1000 + mil * 10;
+            }
+
+            if (s2[1].length() == 3) {
+                result = min * 60 * 1000 + second * 1000 + mil;
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
             result = -1;
