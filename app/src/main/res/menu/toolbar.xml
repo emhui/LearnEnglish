@@ -3,6 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/file"
+        android:title="打开文件"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/skin"
         android:title="在线搜歌"
         app:showAsAction="never" />

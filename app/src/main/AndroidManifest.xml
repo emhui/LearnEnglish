@@ -16,14 +16,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity
-            android:name=".MainActivity"
-            android:label="歌单">
+        <activity android:name="com.ycxy.ymh.activity.SplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".MainActivity"
+            android:label="歌单">
         </activity>
         <activity
             android:name="com.ycxy.ymh.activity.AudioActivity"
@@ -72,7 +74,8 @@
         <activity android:name="com.ycxy.ymh.activity.MVListActivity" />
         <activity android:name="com.ycxy.ymh.activity.VideoActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="landscape"></activity>
+        <activity android:name="com.ycxy.ymh.activity.FileActivity"></activity>
     </application>
 
 </manifest>

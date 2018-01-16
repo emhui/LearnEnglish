@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="@color/le_green"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_back"
+            android:layout_width="30dp"
+            android:layout_marginLeft="10dp"
+            android:layout_height="30dp"
+            android:layout_centerVertical="true"
+            android:background="@drawable/btn_file_back_selector" />
+
+        <TextView
+            android:layout_below="@+id/btn_back"
+            android:layout_alignStart="@id/btn_back"
+            android:id="@+id/tv_cur_dict"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="10dp"
+            android:layout_alignParentBottom="true"
+            android:text="dhfjsdahfjkdasfkjhsdj"
+            android:textColor="#ffffff" />
+    </RelativeLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv_file_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"></android.support.v7.widget.RecyclerView>
+</LinearLayout>

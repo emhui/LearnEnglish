@@ -5,28 +5,34 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:background="@color/le_green"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="60dp"
+        android:background="@color/le_green"
+        >
 
         <EditText
             android:id="@+id/et_name_mv"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/btn_search_mv"
+            android:layout_toLeftOf="@+id/btn_search_mv"
             android:layout_weight="1"
+            android:singleLine="true"
+            android:hint="请输入MV名"
             android:textColor="@color/white"
-            android:textColorHint="@color/white"
-            android:hint="请输入歌曲名" />
+            android:textColorHint="@color/white"/>
 
         <Button
-            android:textColor="@color/black"
             android:id="@+id/btn_search_mv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="搜索" />
-    </LinearLayout>
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/btn_search_selector"
+            android:textColor="@color/black" />
+    </RelativeLayout>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/rv_music_mv"

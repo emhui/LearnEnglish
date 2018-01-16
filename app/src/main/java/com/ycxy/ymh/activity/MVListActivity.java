@@ -144,12 +144,12 @@ public class MVListActivity extends AppCompatActivity {
             mvInfo = JsonUtils.parseMvInfo(response);
             mv = mvInfo.getData();
             Intent intent = new Intent(MVListActivity.this, VideoActivity.class);
-            intent.putExtra(intent_video_url, mv.getBrs().get_$720());
-            intent.putExtra(intent_name_url,mvsBean.getName());
-            intent.putExtra(intent_image_url,mv.getCover());
+//            intent.putExtra(intent_video_url, mv.getBrs().get_$720());
+            intent.putExtra(intent_video_url, mv.getBrs().get_$480());
+            intent.putExtra(intent_name_url, mvsBean.getName());
+            intent.putExtra(intent_image_url, mv.getCover());
             startActivity(intent);
         } catch (Exception e) {
-            Log.d(TAG, "getInfo: " + e.toString());
             handler.sendEmptyMessage(GETMVERRO);
         }
     }

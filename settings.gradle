@@ -1,1 +1,1 @@
-include ':app', ':downloadlyric'
+include ':app', ':downloadlyric', ':filelist'

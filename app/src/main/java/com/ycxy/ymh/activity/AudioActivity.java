@@ -111,6 +111,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                     break;
                 case UPDATAUI:
                     updataUI();
+                    // handler.removeCallbacksAndMessages(null);
                     handler.removeMessages(UPDATAUI);
                     handler.sendEmptyMessageDelayed(UPDATAUI, 100);
                     break;
@@ -123,8 +124,8 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                 // 歌词下载成功
                 case LYRICLOADSUCCESS:
                     try {
-                        audioName = CacheUtils.getFromLoacl(AudioActivity.this,OnlineAudioActivity.key_audioname);
-                        Log.d(TAG, "handleMessage: " + audioName);
+                        audioName = CacheUtils.getFromLoacl(AudioActivity.this, OnlineAudioActivity.key_audioname);
+                     //   Log.d(TAG, "handleMessage: " + audioName);
                         File file = new File(utils.nameToPath(audioName));
                         if (file.exists()) {
                             lyricView.setLyricFile(file);
@@ -190,6 +191,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                 tv_show_name.setText(audioName);
                 if (service.isPlaying()) {
                     getLyric();
+                    Log.d(TAG, "onServiceConnected: _______ getLyric();");
                     startPlayCD();
                     showPlaymode();
                 }
@@ -487,23 +489,36 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      * @throws RemoteException
      */
     private void getLyric() {
-        // lyricView.reset();
-        // 获取真正名字T he Piano Guys-Because of You.mp3
-        try {
-            // audioName = utils.getAudioName(service.getName());
-            audioName = CacheUtils.getFromLoacl(this, OnlineAudioActivity.key_audioname);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        // 判断本地是否已存在该歌曲
-        if (utils.isLyricExit(audioName)) {
-            // 成功找到消息，更新UI
-            handler.sendEmptyMessage(LYRICLOADSUCCESS);
+        String loaclLyric = CacheUtils.getFromLoacl(this, FileActivity.key_file_lyric_path);
+        if (loaclLyric.equals("")) {
+
+
+            // lyricView.reset();
+            // 获取真正名字T he Piano Guys-Because of You.mp3
+            try {
+                // audioName = utils.getAudioName(service.getName());
+                audioName = CacheUtils.getFromLoacl(this, OnlineAudioActivity.key_audioname);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            // 判断本地是否已存在该歌曲
+            if (utils.isLyricExit(audioName)) {
+                // 成功找到消息，更新UI
+                handler.sendEmptyMessage(LYRICLOADSUCCESS);
+            } else {
+                // 从网络加载歌词
+                // 先实现接口一
+                loadLyricFormNetInter1();
+                //
+            }
         } else {
-            // 从网络加载歌词
-            // 先实现接口一
-            loadLyricFormNetInter1();
-            //
+            File file = new File(loaclLyric);
+            if (file.exists()) {
+                lyricView.setLyricFile(file);
+            } else {
+                lyricView.reset();
+            }
+            CacheUtils.saveToLocal(this,FileActivity.key_file_lyric_path,"");
         }
     }
 
@@ -557,6 +572,7 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
      * @throws RemoteException
      */
     private void pauseAudio() throws RemoteException {
+        Log.d(TAG, "AudioActivity.start();: -------------------------------");
         startPlayCD();
         service.start();
         setBtnPlay();
@@ -601,12 +617,8 @@ public class AudioActivity extends AppCompatActivity implements View.OnClickList
                 btn_mode.setBackgroundResource(R.drawable.btn_shuffle_selector);
             }
 
-//                tv_show_name.setText(new Utils().getAudioName(service.getName()));
-//            audioName = service.getName();
-            // audioName = CacheUtils.getFromLoacl(this, OnlineAudioActivity.key_audioname);
             audioName = service.getName();
             tv_show_name.setText(service.getName());
-            // tv_show_name.setText(audioName);
             getLyric();
         } catch (RemoteException e) {
             e.printStackTrace();

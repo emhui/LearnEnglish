@@ -16,6 +16,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
@@ -438,7 +439,7 @@ public class AudioPlayService extends Service {
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                     if (mediaPlayer != null) {
                         if (mShouldStart) {
-                            mediaPlayer.start();
+                            // mediaPlayer.start();
                         } else {
                             mShouldStart = true;
                         }
@@ -511,15 +512,29 @@ public class AudioPlayService extends Service {
         }
         else {
             if (!otherPath.startsWith("http")){
-                // /storage/emulated/0/lyric/庐州月.lrc
-                name = otherPath.split("\\.")[0]; // /storage/emulated/0/lyric/庐州月
-                String[] ns = name.split("/");
-                int size = ns.length;
-                name = ns[size - 1];
+                name = getRealPathName();
+
                 CacheUtils.saveToLocal(AudioPlayService.this, OnlineAudioActivity.key_audioname,name);
             }
         }
 
+        return name;
+    }
+
+    @NonNull
+    private String getRealPathName() {
+        String name;// /storage/emulated/0/lyric/庐州月.lrc
+        name = otherPath.split("\\.")[0].trim(); // /storage/emulated/0/lyric/庐州月
+        String[] ns = name.split("/");
+        int size = ns.length;
+        name = ns[size - 1];
+        if (name.contains("_")) {
+            name = name.split("_")[0].trim();
+        }
+
+        if (name.contains("-")){
+            name = name.split("-")[1].trim();
+        }
         return name;
     }
 
@@ -662,6 +677,8 @@ public class AudioPlayService extends Service {
                         MediaStore.Audio.Media.DATA,//视频的绝对地址
                         MediaStore.Audio.Media.ARTIST,//歌曲的演唱者
                 };
+
+
                 Cursor cursor = resolver.query(uri, objs, null, null, null);
                 if (cursor != null) {
                     while (cursor.moveToNext()) {
@@ -700,23 +717,6 @@ public class AudioPlayService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         } else {
             mNotify();
-/*
-            manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            // 获取意图
-            Intent intent = new Intent(this, AudioActivity.class);
-            intent.putExtra("Notification", true);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                    1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            // Notification和版本有关系，每一代的 Notification都会进行更改，因此推荐使用V4包下的Notification
-            Notification notification = new NotificationCompat.Builder(this)
-                    .setSmallIcon(R.mipmap.cd)
-                    .setContentText("正在播放" + getName())
-                    .setContentTitle("LearnEnglish")
-                    .setContentIntent(pendingIntent)
-                    .build();
-
-            manager.notify(1, notification);
-*/
         }
     }
 
@@ -752,6 +752,7 @@ public class AudioPlayService extends Service {
 
     @Override
     public void onDestroy() {
+        cancelNotify();
         super.onDestroy();
     }
 

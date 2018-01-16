@@ -15,6 +15,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.drawable.ColorDrawable;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -35,17 +36,21 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Toolbar;
 
 import com.ycxy.ymh.activity.AudioActivity;
+import com.ycxy.ymh.activity.FileActivity;
 import com.ycxy.ymh.activity.MVListActivity;
 import com.ycxy.ymh.activity.OnlineAudioActivity;
 import com.ycxy.ymh.adapter.AudioAdapter;
@@ -178,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initData() {
-        isPermission();
+        // isPermission();
         getDataFromLocal();
         EventBus.getDefault().register(this);
         startService();
@@ -272,6 +277,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
+    public static String key_splash = "splash";
+    public static boolean isLiving = false;
+
+    @Override
+    public void onBackPressed() {
+        isLiving = true;
+        // CacheUtils.saveToLocal(this,key_splash,"splash");
+        super.onBackPressed();
+    }
 
     /**
      * 从本地的sdcard得到数据
@@ -295,6 +309,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         MediaStore.Audio.Media.DATA,//视频的绝对地址
                         MediaStore.Audio.Media.ARTIST,//歌曲的演唱者
                 };
+
                 Cursor cursor = resolver.query(uri, objs, null, null, null);
                 if (cursor != null) {
                     while (cursor.moveToNext()) {
@@ -519,45 +534,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    /**
-     * 申请权限访问
-     */
-    public void isPermission() {
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED
-                && ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED
-                && ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_SETTINGS)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MainActivity.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_SETTINGS}, 1);
-        } else {
-        }
-    }
-
-    /**
-     * 权限访问结果回调
-     *
-     * @param requestCode
-     * @param permissions
-     * @param grantResults
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case 1:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-                    finish();
-                }
-                break;
-        }
-    }
-
     @Override
     protected void onDestroy() {
         EventBus.getDefault().unregister(this);
@@ -588,11 +564,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.exit:
                 exit();
                 break;
+            case R.id.file:
+                startActivity(new Intent(MainActivity.this, FileActivity.class));
+                break;
         }
         return true;
     }
 
-    String[] infos = new String[]{"播放", "设置铃声", "查看歌曲信息", "删除"};
+//    String[] infos = new String[]{"播放", "设置铃声", "查看歌曲信息", "删除"};
+    String[] infos = new String[]{"播放","查看地址"};
 
     private void showInfo() {
         String name = new Utils().getAudioName(audioArrayList.get(position).getName());
@@ -606,7 +586,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 openAudio();
                                 break;
                             case 1:
-                                setRingtone();
+                                // setRingtone();
+                                // moreInfo();
+                                Toast.makeText(MainActivity.this,
+                                        audioArrayList.get(position).getData(),
+                                        Toast.LENGTH_LONG).show();
                                 break;
                             case 2:
                                 break;
@@ -617,6 +601,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }).create();
         dialog.show();
+    }
+
+    private void moreInfo() {
+        PopupWindow popupWindow = new PopupWindow(this);
+        popupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+        popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+        popupWindow.setContentView(LayoutInflater.from(this).inflate(R.layout.item_pop, null));
+        popupWindow.setBackgroundDrawable(new ColorDrawable(0x00000000));
+        popupWindow.setOutsideTouchable(false);
+        popupWindow.setFocusable(true);
     }
 
     private void delete() {
@@ -696,9 +690,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void exit() {
         pause();
+        isLiving = false;
         unbindService(conn);
         stopService(intentService);
-        finish();
+        this.finish();
     }
 
     public LongRunningService.LongTimeIBinder longTimeIBinder;
