@@ -671,7 +671,7 @@ public class AudioPlayService extends Service {
                 ContentResolver resolver = AudioPlayService.this.getContentResolver();
                 Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                 String[] objs = {
-                        MediaStore.Audio.Media.DISPLAY_NAME,//视频文件在sdcard的名称
+                        MediaStore.Audio.Media.TITLE,//视频文件在sdcard的名称
                         MediaStore.Audio.Media.DURATION,//视频总时长
                         MediaStore.Audio.Media.SIZE,//视频的文件大小
                         MediaStore.Audio.Media.DATA,//视频的绝对地址
