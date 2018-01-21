@@ -19,6 +19,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Formatter;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Utils {
 
@@ -235,7 +237,7 @@ public class Utils {
         return sharedPreferences.getInt(key, AudioPlayService.REPEAT_ALL);
     }
 
-    // 发送更新
+    // 发送广播更新数据库
     public void updataMediaData(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { // 判断SDK版本是不是4.4或者高于4.4
             String[] paths = new String[]{Environment.getExternalStorageDirectory().toString()};
@@ -243,7 +245,13 @@ public class Utils {
         } else {
             context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED));
         }
-
-        EventBus.getDefault().post(new DataBean());
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                EventBus.getDefault().post(new DataBean());
+            }
+        };
+        Timer timer = new Timer(true);
+        timer.schedule(task,2000);
     }
 }

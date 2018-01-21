@@ -61,6 +61,7 @@ import com.ycxy.ymh.receiver.MusicBoradcastReceiver;
 import com.ycxy.ymh.service.AudioPlayService;
 import com.ycxy.ymh.service.LongRunningService;
 import com.ycxy.ymh.utils.CacheUtils;
+import com.ycxy.ymh.utils.DBUtils;
 import com.ycxy.ymh.utils.Utils;
 import com.ycxy.ymh.view.MyDecoration;
 import com.ycxy.ymh.view.MyTextView;
@@ -74,9 +75,10 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, SwipeRefreshLayout.OnRefreshListener {
 
-    private static final int SUCCESSQUERY = 0;
     private static final int SHOWAUDIONAME = 1;
     private static final String TAG = "MainActivity";
+    public static final int SUCCESSQUERY = 0;
+    public static final int UPDATADB = 2;
     private ArrayList<Audio> audioArrayList;
     private LinearLayout ll_audio_msg;
     private RecyclerView recyclerView;
@@ -94,12 +96,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             super.handleMessage(msg);
             switch (msg.what) {
                 case SUCCESSQUERY:
-                    Log.d(TAG, "handleMessage: " + audioArrayList.size());
-                    adapter = new AudioAdapter(MainActivity.this, audioArrayList);
-                    recyclerView.setAdapter(adapter);
+                    audioArrayList = (ArrayList<Audio>) msg.obj;
+                    if (audioArrayList != null) {
+                        adapter = new AudioAdapter(MainActivity.this, audioArrayList);
+                        recyclerView.setAdapter(adapter);
+                    }
                     break;
                 case SHOWAUDIONAME:
                     updataUI();
+                    break;
+                case UPDATADB:
+                    swipeRefreshLayout.setRefreshing(false);
+                    audioArrayList = (ArrayList<Audio>) msg.obj;
+                    if (audioArrayList != null) {
+                        adapter.notify(audioArrayList);
+                    }
+                    Toast.makeText(MainActivity.this,
+                            "音乐库扫描完成~", Toast.LENGTH_SHORT).show();
                     break;
             }
         }
@@ -183,8 +196,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initData() {
-        // isPermission();
-        getDataFromLocal();
+        DBUtils.getAudioList(this,handler,SUCCESSQUERY);
         EventBus.getDefault().register(this);
         startService();
         position = new Utils().getPosfStor(this);
@@ -287,81 +299,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onBackPressed();
     }
 
-    /**
-     * 从本地的sdcard得到数据
-     * //1.遍历sdcard,后缀名
-     * //2.从内容提供者里面获取视频
-     * //3.如果是6.0的系统，动态获取读取sdcard的权限
-     */
-    private void getDataFromLocal() {
-
-        new Thread() {
-            @Override
-            public void run() {
-                super.run();
-                audioArrayList = new ArrayList<>();
-                ContentResolver resolver = MainActivity.this.getContentResolver();
-                Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                String[] objs = {
-                        MediaStore.Audio.Media.TITLE,//视频文件在sdcard的名称
-                        MediaStore.Audio.Media.DURATION,//视频总时长
-                        MediaStore.Audio.Media.SIZE,//视频的文件大小
-                        MediaStore.Audio.Media.DATA,//视频的绝对地址
-                        MediaStore.Audio.Media.ARTIST,//歌曲的演唱者
-                };
-
-                Cursor cursor = resolver.query(uri, objs, null, null, null);
-                if (cursor != null) {
-                    while (cursor.moveToNext()) {
-
-                        Audio mediaItem = new Audio();
-
-                        audioArrayList.add(mediaItem);//写在上面
-
-                        String name = cursor.getString(0);//视频的名称
-                        mediaItem.setName(name);
-
-                        long duration = cursor.getLong(1);//视频的时长
-                        mediaItem.setDuration(duration);
-
-                        long size = cursor.getLong(2);//视频的文件大小
-                        mediaItem.setSize(size);
-
-                        String data = cursor.getString(3);//视频的播放地址
-                        mediaItem.setData(data);
-
-                        String artist = cursor.getString(4);//艺术家
-                        mediaItem.setArtist(artist);
-                    }
-                    cursor.close();
-                }
-                //Handler发消息
-                handler.sendEmptyMessage(SUCCESSQUERY);
-
-            }
-        }.start();
-    }
-
-    /**
-     * 解决安卓6.0以上版本不能读取外部存储权限的问题
-     *
-     * @param activity
-     * @return
-     */
-    public static boolean isGrantExternalRW(Activity activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && activity.checkSelfPermission(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            activity.requestPermissions(new String[]{
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-            }, 1);
-
-            return false;
-        }
-
-        return true;
-    }
-
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
@@ -433,25 +370,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onRefresh() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        adapter.notifyDataSetChanged();
-                        swipeRefreshLayout.setRefreshing(false);
-                    }
-                });
-            }
-        }).start();
-
-
+        new Utils().updataMediaData(this);
     }
 
     /**
@@ -571,8 +490,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return true;
     }
 
-//    String[] infos = new String[]{"播放", "设置铃声", "查看歌曲信息", "删除"};
-    String[] infos = new String[]{"播放","查看地址"};
+    String[] infos = new String[]{"播放", "设置铃声", "查看歌曲信息", "删除"};
+//    String[] infos = new String[]{"播放","查看地址","删除"};
 
     private void showInfo() {
         String name = new Utils().getAudioName(audioArrayList.get(position).getName());
@@ -717,9 +636,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         stopService(intent);
     }
 
-    @Subscribe(threadMode = ThreadMode.ASYNC, sticky = false, priority = 0)
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = false, priority = 0)
     public void scanDataBase(DataBean dataBean) {
-        getDataFromLocal();
-        Log.d(TAG, "scanDataBase: ==============");
+        DBUtils.getAudioList(this, handler, UPDATADB);
     }
 }

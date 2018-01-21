@@ -13,7 +13,9 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -30,6 +32,7 @@ import com.ycxy.ymh.learnenglish.IAudioPlayService;
 import com.ycxy.ymh.learnenglish.R;
 import com.ycxy.ymh.utils.CacheUtils;
 import com.ycxy.ymh.utils.Constants;
+import com.ycxy.ymh.utils.DBUtils;
 import com.ycxy.ymh.utils.Utils;
 
 import org.greenrobot.eventbus.EventBus;
@@ -43,8 +46,29 @@ import java.util.Random;
 public class AudioPlayService extends Service {
 
     private static final String TAG = "AudioPlayService";
+    private static final int SUCCESS = 0;
+    private static final int UPDATA = 1;
     private ArrayList<Audio> audioArrayList;
     private int position = 0;
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case SUCCESS:
+                    audioArrayList = (ArrayList<Audio>) msg.obj;
+                    break;
+                case UPDATA:
+                    ArrayList<Audio> audios =
+                            (ArrayList<Audio>) msg.obj;
+                    if (audios != null) {
+                        audioArrayList.clear();
+                        audioArrayList.addAll(audios);
+                    }
+                    break;
+            }
+        }
+    };
     /**
      * 播放音乐
      */
@@ -89,10 +113,8 @@ public class AudioPlayService extends Service {
         mFocusChangeListener = new MyAudioFocusChangeListener();
         playmode = new Utils().getPlaymode(this, "playmode");
         position = new Utils().getPosfStor(this);
-
-        getDataFromLocal();
+        DBUtils.getAudioList(this, handler, SUCCESS);
     }
-
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -295,59 +317,6 @@ public class AudioPlayService extends Service {
          */
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
-            switch (what) {
-                case -38:
-                    Log.d(TAG, "MEDIA_ERROR_IO++++++++++++");
-                    break;
-                case -1004:
-                    Log.d(TAG, "MEDIA_ERROR_IO");
-                    break;
-                case -1007:
-                    Log.d(TAG, "MEDIA_ERROR_MALFORMED");
-                    break;
-                case 200:
-                    Log.d(TAG, "MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK");
-                    break;
-                case 100:
-                    Log.d(TAG, "MEDIA_ERROR_SERVER_DIED");
-                    break;
-                case -110:
-                    Log.d(TAG, "MEDIA_ERROR_TIMED_OUT");
-                    break;
-                case 1:
-                    Log.d(TAG, "MEDIA_ERROR_UNKNOWN");
-                    break;
-                case -1010:
-                    Log.d(TAG, "MEDIA_ERROR_UNSUPPORTED");
-                    break;
-            }
-            switch (extra) {
-                case 800:
-                    Log.d(TAG, "MEDIA_INFO_BAD_INTERLEAVING");
-                    break;
-                case 702:
-                    Log.d(TAG, "MEDIA_INFO_BUFFERING_END");
-                    break;
-                case 701:
-                    Log.d(TAG, "MEDIA_INFO_METADATA_UPDATE");
-                    break;
-                case 802:
-                    Log.d(TAG, "MEDIA_INFO_METADATA_UPDATE");
-                    break;
-                case 801:
-                    Log.d(TAG, "MEDIA_INFO_NOT_SEEKABLE");
-                    break;
-                case 1:
-                    Log.d(TAG, "MEDIA_INFO_UNKNOWN");
-                    break;
-                case 3:
-                    Log.d(TAG, "MEDIA_INFO_VIDEO_RENDERING_START");
-                    break;
-                case 700:
-                    Log.d(TAG, "MEDIA_INFO_VIDEO_TRACK_LAGGING");
-                    break;
-            }
-
             return true;
         }
     }
@@ -506,15 +475,14 @@ public class AudioPlayService extends Service {
      */
     private String getName() {
         String name = "";
-        if (otherPath == null){
+        if (otherPath == null) {
             name = new Utils().getAudioName(audio.getName());
-            CacheUtils.saveToLocal(AudioPlayService.this, OnlineAudioActivity.key_audioname,name);
-        }
-        else {
-            if (!otherPath.startsWith("http")){
+            CacheUtils.saveToLocal(AudioPlayService.this, OnlineAudioActivity.key_audioname, name);
+        } else {
+            if (!otherPath.startsWith("http")) {
                 name = getRealPathName();
 
-                CacheUtils.saveToLocal(AudioPlayService.this, OnlineAudioActivity.key_audioname,name);
+                CacheUtils.saveToLocal(AudioPlayService.this, OnlineAudioActivity.key_audioname, name);
             }
         }
 
@@ -532,7 +500,7 @@ public class AudioPlayService extends Service {
             name = name.split("_")[0].trim();
         }
 
-        if (name.contains("-")){
+        if (name.contains("-")) {
             name = name.split("-")[1].trim();
         }
         return name;
@@ -662,53 +630,6 @@ public class AudioPlayService extends Service {
         mediaPlayer.seekTo(msec);
     }
 
-    private void getDataFromLocal() {
-        new Thread() {
-            @Override
-            public void run() {
-                super.run();
-                audioArrayList = new ArrayList<>();
-                ContentResolver resolver = AudioPlayService.this.getContentResolver();
-                Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                String[] objs = {
-                        MediaStore.Audio.Media.TITLE,//视频文件在sdcard的名称
-                        MediaStore.Audio.Media.DURATION,//视频总时长
-                        MediaStore.Audio.Media.SIZE,//视频的文件大小
-                        MediaStore.Audio.Media.DATA,//视频的绝对地址
-                        MediaStore.Audio.Media.ARTIST,//歌曲的演唱者
-                };
-
-
-                Cursor cursor = resolver.query(uri, objs, null, null, null);
-                if (cursor != null) {
-                    while (cursor.moveToNext()) {
-
-                        Audio mediaItem = new Audio();
-
-                        audioArrayList.add(mediaItem);//写在上面
-
-                        String name = cursor.getString(0);//视频的名称
-                        mediaItem.setName(name);
-
-                        long duration = cursor.getLong(1);//视频的时长
-                        mediaItem.setDuration(duration);
-
-                        long size = cursor.getLong(2);//视频的文件大小
-                        mediaItem.setSize(size);
-
-                        String data = cursor.getString(3);//视频的播放地址
-                        mediaItem.setData(data);
-
-                        String artist = cursor.getString(4);//艺术家
-                        mediaItem.setArtist(artist);
-                    }
-                    cursor.close();
-                }
-
-            }
-        }.start();
-    }
-
     NotificationManager mNotificationManager = null;
 
     public void setNotify() {
@@ -756,7 +677,9 @@ public class AudioPlayService extends Service {
         super.onDestroy();
     }
 
-    @Subscribe(threadMode = ThreadMode.ASYNC, sticky = false, priority = 0)
-    public void scanDataBase(DataBean dataBean){
-        getDataFromLocal();
-    }}
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = false, priority = 0)
+    public void scanDataBase(DataBean dataBean) {
+        Log.d(TAG, "scanDataBase: ==========-------");
+        DBUtils.getAudioList(AudioPlayService.this, handler, UPDATA);
+    }
+}

@@ -130,8 +130,6 @@ public class OnlineAudioActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_online);
-        isPermission();
-
         initView();
         initData();
     }
@@ -181,43 +179,6 @@ public class OnlineAudioActivity extends AppCompatActivity {
                 showInfo();
             }
         });
-    }
-
-
-    /**
-     * 申请权限访问
-     */
-    public void isPermission() {
-        if (ContextCompat.checkSelfPermission(OnlineAudioActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED
-                && ContextCompat.checkSelfPermission(OnlineAudioActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(OnlineAudioActivity.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-        } else {
-        }
-    }
-
-    /**
-     * 权限访问结果回调
-     *
-     * @param requestCode
-     * @param permissions
-     * @param grantResults
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case 1:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-                    finish();
-                }
-                break;
-        }
     }
 
     /**

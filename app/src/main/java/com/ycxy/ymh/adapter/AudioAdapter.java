@@ -2,9 +2,11 @@ package com.ycxy.ymh.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +16,7 @@ import android.widget.TextView;
 import com.ycxy.ymh.bean.Audio;
 import com.ycxy.ymh.learnenglish.MainActivity;
 import com.ycxy.ymh.learnenglish.R;
+import com.ycxy.ymh.utils.DBUtils;
 import com.ycxy.ymh.utils.Utils;
 
 import org.w3c.dom.Text;
@@ -28,10 +31,24 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder>{
 
     private ArrayList<Audio> audioArrayList;
     private Context mContext;
+    private Handler handler;
 
     public AudioAdapter(Context context, ArrayList<Audio> audioArrayList) {
         this.mContext = context;
         this.audioArrayList = audioArrayList;
+    }
+
+    public AudioAdapter(Context context, Handler handler) {
+        this.mContext = context;
+        // this.audioArrayList = DBUtils.getAudioList(context, handler,MainActivity.SUCCESSQUERY);
+    }
+
+    private static final String TAG = "AudioAdapter";
+    public void notify(ArrayList<Audio> audioArrayList) {
+        this.audioArrayList.clear();
+        this.audioArrayList.addAll(audioArrayList);
+        Log.d(TAG, "notify: " + this.audioArrayList.size());
+        this.notifyDataSetChanged();
     }
 
     public void remove(int pos){

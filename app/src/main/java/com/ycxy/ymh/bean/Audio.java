@@ -1,11 +1,13 @@
 package com.ycxy.ymh.bean;
 
+import java.io.Serializable;
+
 /**
  * Created by Y&MH on 2018-1-3.
  */
 
 
-public class Audio {
+public class Audio{
     /**
      * 名称
      * 时长
