@@ -111,8 +111,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (audioArrayList != null) {
                         adapter.notify(audioArrayList);
                     }
-                    Toast.makeText(MainActivity.this,
-                            "音乐库扫描完成~", Toast.LENGTH_SHORT).show();
                     break;
             }
         }
@@ -640,4 +638,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void scanDataBase(DataBean dataBean) {
         DBUtils.getAudioList(this, handler, UPDATADB);
     }
+
+/*    @Override
+    protected void onResume() {
+        Log.d(TAG, "onResume: ---------------");
+        super.onResume();
+        String fresh = CacheUtils.getFromLoacl(this, OnlineAudioActivity.key_fresh);
+        if (!fresh.equals("")) {
+            new Utils().updataMediaData(this);
+            CacheUtils.saveToLocal(this, OnlineAudioActivity.key_fresh,"");
+        }
+    }*/
 }

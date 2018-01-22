@@ -67,6 +67,7 @@ public class OnlineAudioActivity extends AppCompatActivity {
 
     private MusicListAdapter adapter;
 
+    public static final String key_fresh = "fresh";
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -87,6 +88,8 @@ public class OnlineAudioActivity extends AppCompatActivity {
                     break;
                 case DOWNLOADSUCCESS:
                     new Utils().updataMediaData(OnlineAudioActivity.this);
+                    CacheUtils.saveToLocal(OnlineAudioActivity.this,
+                            key_fresh,"fresh");
                     Toast.makeText(OnlineAudioActivity.this, "音频下载成功", Toast.LENGTH_SHORT).show();
                     break;
             }

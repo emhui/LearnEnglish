@@ -51,9 +51,7 @@ public class NetUtils {
                 {
                     @Override
                     public void inProgress(float progress, long total, int id) {
-                        // progressBar.setMax((int) total);
                         progressBar.setProgress((int) (progress * 100));
-                        Log.d(TAG, "inProgress: " + total + ":--->" + progress);
                         super.inProgress(progress, total, id);
                     }
 

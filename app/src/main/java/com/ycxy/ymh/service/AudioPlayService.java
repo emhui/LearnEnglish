@@ -109,6 +109,7 @@ public class AudioPlayService extends Service {
     }
 
     private void initData() {
+        EventBus.getDefault().register(this);
         mAudioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         mFocusChangeListener = new MyAudioFocusChangeListener();
         playmode = new Utils().getPlaymode(this, "playmode");
@@ -265,7 +266,6 @@ public class AudioPlayService extends Service {
     public void openAudio(int position) {
         this.position = position;
         otherPath = null;
-        Log.d(TAG, "openAudio: " + position);
         if (audioArrayList != null && audioArrayList.size() > 0) {
 
             audio = audioArrayList.get(position);
@@ -673,13 +673,13 @@ public class AudioPlayService extends Service {
 
     @Override
     public void onDestroy() {
+        EventBus.getDefault().unregister(this);
         cancelNotify();
         super.onDestroy();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = false, priority = 0)
     public void scanDataBase(DataBean dataBean) {
-        Log.d(TAG, "scanDataBase: ==========-------");
         DBUtils.getAudioList(AudioPlayService.this, handler, UPDATA);
     }
 }
